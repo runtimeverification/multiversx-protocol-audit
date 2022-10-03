@@ -1,0 +1,1 @@
+alias konfig = config | kast -i kore -o pretty --definition esdt-kompiled /dev/stdin

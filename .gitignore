@@ -1,0 +1,8 @@
+.kompile*
+.kprove*
+.krun*
+
+esdt-kompiled
+
+.sessionCommands
+.kore-repl-history
