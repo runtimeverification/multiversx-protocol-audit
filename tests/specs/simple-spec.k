@@ -57,7 +57,7 @@ module SIMPLE-SPEC
       </shard>
     </shards>
       requires A1 =/=K A2
-       andBool #metachainShardId =/=K ShrId
+       andBool #metachainShardId =/=Shard ShrId
        andBool notBool(A1 in Frozen)
        andBool notBool(A2 in Frozen)
        andBool 0 <Int Val 
@@ -114,7 +114,7 @@ module SIMPLE-SPEC
       </shard>
     </shards>
       requires A1 =/=K A2
-       andBool #metachainShardId =/=K ShrId
+       andBool #metachainShardId =/=Shard ShrId
        andBool notBool(A1 in Frozen)
        andBool A2 in Frozen
        andBool 0 <Int Val 

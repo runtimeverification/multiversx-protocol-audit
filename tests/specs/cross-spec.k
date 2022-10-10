@@ -130,9 +130,9 @@ module CROSS-SPEC
         ...
       </shard>
     </shards>
-      requires ShrId1 =/=K ShrId2
-       andBool ShrId1 =/=K #metachainShardId
-       andBool ShrId2 =/=K #metachainShardId
+      requires ShrId1 =/=Shard ShrId2
+       andBool ShrId1 =/=Shard #metachainShardId
+       andBool ShrId2 =/=Shard #metachainShardId
        andBool notBool(A1 in Frozen1)
        andBool notBool(A2 in Frozen2)
        andBool 0 <Int Val

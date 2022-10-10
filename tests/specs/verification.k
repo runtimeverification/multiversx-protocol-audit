@@ -21,5 +21,6 @@ module VERIFICATION
     
     rule A +Int (0 -Int B) => A -Int B                                                                      [simplification]
     
+    rule MQ:MQueue ==K (_:ShardId M|-> TxL(_)) => false              requires isEmpty(MQ)                   [simplification]
 
 endmodule

@@ -66,9 +66,9 @@ module CROSS-DEST-SPEC
       // --------------------------------------------------------------------------------
         <user-txs> .TxList </user-txs>
         <incoming-txs> 
-          ShrId1 M|-> TxL(transfer(accountAddr(ShrId1, _A1), accountAddr(ShrId2, A2), TokId, Val, false) #as Tx )
+          (ShrId1 M|-> TxL(transfer(accountAddr(ShrId1, _A1), accountAddr(ShrId2, A2), TokId, Val, false) #as Tx ) )
             => 
-          MQ2:MQueue 
+          ?MQ2:MQueue 
         </incoming-txs>
         <steps> . </steps>
         <out-txs> .TxList </out-txs>
@@ -94,8 +94,8 @@ module CROSS-DEST-SPEC
         ...
       </shard>
     </shards>
-      requires ShrId1 =/=K ShrId2
-       andBool ShrId2 =/=K #metachainShardId
+      requires ShrId1 =/=Shard ShrId2
+       andBool ShrId2 =/=Shard #metachainShardId
        andBool notBool(A2 in Frozen2)
        andBool 0 <Int Val
        andBool 0 <=Int BAL2 // >

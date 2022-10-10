@@ -49,7 +49,7 @@ module ISSUE-SIMPLE-SPEC
         ...
       </shard>
     </shards>
-      requires #metachainShardId =/=K Shr1
+      requires #metachainShardId =/=Shard Shr1
        andBool 0 <Int Supply 
        andBool notBool( TokId in_keys( BALS ) )
       ensures Supply ==Int #getInt(?BALS2, TokId)

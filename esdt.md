@@ -166,7 +166,7 @@ Execute one of these steps:
             <current-tx> transfer(_, RCV, _, Val, _) </current-tx>
             ...
           </shard>  
-          requires accountShard(RCV) =/=K #metachainShardId
+          requires accountShard(RCV) =/=Shard #metachainShardId
            andBool 0 <Int Val                             // >
      
     // TODO: Check Limited Transfer
@@ -188,7 +188,7 @@ Skip if sender is not at this shard
             <current-tx> Tx </current-tx>
             ...
           </shard>  
-          requires ShrId =/=K #txSenderShard(Tx)
+          requires ShrId =/=Shard #txSenderShard(Tx)
 ```
 Check gas and token settings, then decrease the sender's balance.
 
@@ -219,7 +219,7 @@ If the destination is not at this shard, add the transaction to the output queue
             <out-txs> ... (.TxList => TxL(Tx)) </out-txs>
             ...
           </shard>
-          requires ShrId =/=K #txDestShard(Tx)
+          requires ShrId =/=Shard #txDestShard(Tx)
 ```
 
 Perform payable and token settings checks, then, increase the destination account's balance. 
@@ -486,7 +486,7 @@ Restore to snapshot
 ```k
     
     syntax Bool ::= #isCrossShard(Transaction)          [function, functional]
-    rule #isCrossShard(Tx) => #txSenderShard(Tx) =/=K #txDestShard(Tx)
+    rule #isCrossShard(Tx) => #txSenderShard(Tx) =/=Shard #txDestShard(Tx)
     
     syntax Bool ::= #onDestShard(ShardId, Transaction)            [function, functional]
                   | #onSenderShard(ShardId, Transaction)          [function, functional]
@@ -506,13 +506,25 @@ Restore to snapshot
     
     syntax ShardId ::= #txDestShard(Transaction)        [function, functional]
                      | #txSenderShard(Transaction)      [function, functional]
-    rule #txDestShard(transfer(_, ACT, _, _, _))   => accountShard(ACT)    
+    rule #txDestShard(transfer(_, ACT, _, _, _))   => accountShard(ACT)
+    rule #txDestShard(issue(_, _, _) _)            => #metachainShardId    
     rule #txDestShard(#nullTx)                     => #metachainShardId
 
     rule #txSenderShard(transfer(ACT, _, _, _, _)) => accountShard(ACT)    
-    rule #txSenderShard(#nullTx)                     => #metachainShardId
-    
+    rule #txSenderShard(issue(ACT, _, _) _)        => accountShard(ACT)
+    rule #txSenderShard(#nullTx)                   => #metachainShardId
 
+    syntax Bool ::= ShardId "=/=Shard" ShardId        [function, functional, smt-hook(distinct)]
+    rule I:Int             =/=Shard J:Int                   => I =/=Int J
+    rule _:Int             =/=Shard #metachainShardId       => true
+    rule #metachainShardId =/=Shard _:Int                   => true
+    rule #metachainShardId =/=Shard #metachainShardId       => false
+    
+    syntax Bool ::= ShardId "==Shard" ShardId        [function, functional, smt-hook(=)]
+    rule I:Int             ==Shard J:Int                   => I ==Int J
+    rule _:Int             ==Shard #metachainShardId       => false
+    rule #metachainShardId ==Shard _:Int                   => false
+    rule #metachainShardId ==Shard #metachainShardId       => true     
 ```
 ## Issue fungible tokens
 
