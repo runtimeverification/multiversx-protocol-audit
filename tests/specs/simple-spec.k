@@ -1,18 +1,7 @@
 requires "../../esdt.md"
+requires "verification.k"
+
 requires "domains.md"
-
-module VERIFICATION
-    imports K-EQUAL
-    imports ESDT
-    imports MAP
-    imports MAP-SYMBOLIC
-
-    rule #getInt( A |-> I:Int Rest:Map, A) => I 
-      requires notBool( A in_keys(Rest)) [simplification]
-
-    rule A +Int (0 -Int B) => A -Int B    [simplification]
-
-endmodule
 
 module SIMPLE-SPEC
     imports VERIFICATION
@@ -22,21 +11,33 @@ module SIMPLE-SPEC
     <shards>
       <shard>
         <shard-id> ShrId </shard-id>
+
+      // ACCOUNTS
+      // -------------------------------------------------------------------------------
         <accounts>
           <account>
             <account-name> A1 </account-name>
-            <esdt-balances> ... TokId |-> (BAL1 => BAL1 -Int Val) ... </esdt-balances>
+            <esdt-balances> ... TokId B|-> (BAL1 => BAL1 -Int Val) ... </esdt-balances>
             ...
           </account>
           <account>
             <account-name> A2 </account-name>
-            <esdt-balances> ... TokId |-> (BAL2 => BAL2 +Int Val) ... </esdt-balances>
+            <esdt-balances> ... TokId B|-> (BAL2 => BAL2 +Int Val) ... </esdt-balances>
             ...
           </account>
           ...    
         </accounts>
-        <transactions> transfer(accountAddr(ShrId, A1), accountAddr(ShrId, A2), TokId, Val, false) #as Tx => . </transactions>
-        <current-tx> _ => ?_ </current-tx>
+      
+      // ACTIONS
+      // --------------------------------------------------------------------------------
+        <user-txs> TxL(transfer(accountAddr(ShrId, A1), accountAddr(ShrId, A2), TokId, Val, false) #as Tx) => .TxList </user-txs>
+        <incoming-txs> .MQueue </incoming-txs>
+        <current-tx> #nullTx </current-tx>
+        <steps> . </steps>
+        <out-txs> .TxList </out-txs>
+      
+      // TOKEN CONFIGURATION
+      // --------------------------------------------------------------------------------
         <token-settings>
             <token-setting>
               <token-setting-id> TokId </token-setting-id>
@@ -47,9 +48,11 @@ module SIMPLE-SPEC
             </token-setting>
             //...
         </token-settings>
-        <out-transfers> . </out-transfers>
+      
+      // OTHERS
+      // --------------------------------------------------------------------------------
         <snapshot> #emptySnapshot </snapshot>
-        <logs> L => L ~> #success ~> Tx </logs>
+        <logs> ... (. => #success ~> Tx) </logs>
         ...
       </shard>
     </shards>
@@ -66,21 +69,32 @@ module SIMPLE-SPEC
      <shards>
       <shard>
         <shard-id> ShrId </shard-id>
+
+      // ACCOUNTS
+      // --------------------------------------------------------------------------------
         <accounts>
           <account>
             <account-name> A1 </account-name>
-            <esdt-balances> ... TokId |-> BAL1 ... </esdt-balances>
+            <esdt-balances> ... TokId B|-> BAL1 ... </esdt-balances>
             ...
           </account>
           <account>
             <account-name> A2 </account-name>
-            <esdt-balances> ... TokId |-> BAL2 ... </esdt-balances>
+            <esdt-balances> ... TokId B|-> BAL2 ... </esdt-balances>
             ...
           </account>
           ...    
         </accounts>
-        <transactions> transfer(accountAddr(ShrId, A1), accountAddr(ShrId, A2), TokId, Val, false) #as Tx => . </transactions>
-        <current-tx> _ => ?_ </current-tx>
+
+      // ACTIONS
+      // --------------------------------------------------------------------------------
+        <user-txs> TxL(transfer(accountAddr(ShrId, A1), accountAddr(ShrId, A2), TokId, Val, false) #as Tx) => .TxList </user-txs>
+        <incoming-txs> .MQueue </incoming-txs>
+        <current-tx> #nullTx </current-tx>
+        <steps> . </steps>
+        <out-txs> .TxList </out-txs>
+      // TOKEN CONFIGURATION
+      // --------------------------------------------------------------------------------
         <token-settings>
             <token-setting>
               <token-setting-id> TokId </token-setting-id>
@@ -91,9 +105,11 @@ module SIMPLE-SPEC
             </token-setting>
             //...
         </token-settings>
-        <out-transfers> . </out-transfers>
+      
+      // OTHERS
+      // --------------------------------------------------------------------------------
         <snapshot> #emptySnapshot </snapshot>
-        <logs> L => L ~> #failure(#ErrESDTIsFrozenForAccount) ~> Tx </logs>
+        <logs> ... (. => #failure(#ErrESDTIsFrozenForAccount) ~> Tx) </logs>
         ...
       </shard>
     </shards>

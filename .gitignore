@@ -3,6 +3,8 @@
 .krun*
 
 esdt-kompiled
+verification-kompiled
 
 .sessionCommands
 .kore-repl-history
+kore-repl.tar.gz

@@ -35,7 +35,7 @@ requires "domains.md"
   
 //     rule MQ:MQueue ==K ShrId1 M|-> TxL(_) => false requires isEmpty(MQ)    [simplification]
 
-//     // rule X ==Int X +Int Y => false requires 0 <Int Y                       [simplification]
+
     
 //     // rule X ==Int X +Int Y => 0 ==Int Y                                     [simplification]
 
@@ -43,52 +43,12 @@ requires "domains.md"
     
 // endmodule
 
-module CROSS-SPEC
+module CROSS-DEST-SPEC
     imports VERIFICATION
 
     // simple cross shard successful  
     claim <meta-transactions> . </meta-transactions>
      <shards>
-      <shard>
-        <shard-id> ShrId1 </shard-id>
-      // ACCOUNTS
-      // -------------------------------------------------------------------------------
-        <accounts>
-          <account>
-            <account-name> A1 </account-name>
-            <esdt-balances> ... TokId B|-> (BAL1 => BAL1 -Int Val) ... </esdt-balances>
-            ...
-          </account>
-          ...
-        </accounts>
-        
-      // ACTIONS
-      // --------------------------------------------------------------------------------
-        <user-txs> TxL(transfer(accountAddr(ShrId1, A1), accountAddr(ShrId2, A2), TokId, Val, false) #as Tx) => .TxList </user-txs>
-        <incoming-txs> .MQueue </incoming-txs>
-        <steps> . </steps>
-        <out-txs> .TxList </out-txs>
-        <current-tx> #nullTx </current-tx>
-      
-      // TOKEN CONFIGURATION
-      // --------------------------------------------------------------------------------
-        <token-settings>
-            <token-setting>
-              <token-setting-id> TokId </token-setting-id>
-              <limited> false </limited>
-              <paused> false </paused>
-              <frozen> Frozen1 </frozen>
-              ...
-            </token-setting>
-            //...
-        </token-settings>
-
-      // OTHERS
-      // --------------------------------------------------------------------------------
-        <snapshot> #emptySnapshot </snapshot>
-        <logs> LOGS1 => LOGS1 ~> #success ~> Tx </logs>
-        ...
-      </shard>
       <shard>
         <shard-id> ShrId2 </shard-id>
       // ACCOUNTS
@@ -105,7 +65,11 @@ module CROSS-SPEC
       // ACTIONS
       // --------------------------------------------------------------------------------
         <user-txs> .TxList </user-txs>
-        <incoming-txs> .MQueue => MQ2:MQueue </incoming-txs>
+        <incoming-txs> 
+          ShrId1 M|-> TxL(transfer(accountAddr(ShrId1, _A1), accountAddr(ShrId2, A2), TokId, Val, false) #as Tx )
+            => 
+          MQ2:MQueue 
+        </incoming-txs>
         <steps> . </steps>
         <out-txs> .TxList </out-txs>
         <current-tx> #nullTx </current-tx>
@@ -131,12 +95,9 @@ module CROSS-SPEC
       </shard>
     </shards>
       requires ShrId1 =/=K ShrId2
-       andBool ShrId1 =/=K #metachainShardId
        andBool ShrId2 =/=K #metachainShardId
-       andBool notBool(A1 in Frozen1)
        andBool notBool(A2 in Frozen2)
        andBool 0 <Int Val
-       andBool Val <=Int BAL1
        andBool 0 <=Int BAL2 // >
        andBool isEmpty(MQ2)
 

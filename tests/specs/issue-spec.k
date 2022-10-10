@@ -1,20 +1,8 @@
 requires "../../esdt.md"
+requires "verification.k"
+
 requires "domains.md"
 
-
-module VERIFICATION
-    imports K-EQUAL
-    imports ESDT
-    imports MAP
-    imports MAP-SYMBOLIC
-
-    rule #getInt( A |-> I:Int Rest:Map, A) => I 
-        requires notBool( A in_keys(Rest)) [simplification]
-
-    rule A +Int (0 -Int B) => A -Int B    [simplification]
-
-
-endmodule
 
 module ISSUE-SPEC
     imports VERIFICATION

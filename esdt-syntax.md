@@ -16,6 +16,7 @@ module ESDT-SYNTAX
     syntax TokenId ::= Int
 
     syntax Transaction ::= ESDTTransfer
+                         | BuiltinCall
 
     syntax BuiltinCall ::= "issue" "(" AccountAddr "," TokenId "," Int ")" Properties   
     
