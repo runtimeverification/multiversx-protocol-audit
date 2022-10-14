@@ -7,7 +7,6 @@ requires "esdt-syntax.md"
 requires "containers.md"
 requires "errors.md"
 
-
 module ESDT
     imports ESDT-SYNTAX
     imports MAP
@@ -17,11 +16,13 @@ module ESDT
     imports K-EQUAL
     imports CONTAINERS
     imports ERRORS
-
+    imports LIST
+    
     configuration
       <esdt>
         <meta>
-          <meta-transactions> .K </meta-transactions>
+          <meta-steps> .K </meta-steps>
+          <meta-incoming> .MQueue </meta-incoming>
           <global-token-settings> 
             <global-token-setting multiplicity="*" type="Map">
               <global-token-id>     0:TokenId </global-token-id>
@@ -34,7 +35,7 @@ module ESDT
         
         <shards>
           <shard multiplicity="*" type="Map">
-            <shard-id> 0:ShardId </shard-id>
+            <shard-id> 0:Int </shard-id>
             <incoming-txs> .MQueue </incoming-txs>
             <user-txs> .TxList </user-txs>
             <steps> .K </steps>
@@ -61,18 +62,22 @@ module ESDT
               </token-setting>
             </token-settings>
 
-            <logs> .K </logs>
+            <logs> .Logs </logs>
           </shard>
         </shards>
       </esdt>
 
     syntax Transaction ::= "#nullTx"
 
-    syntax AccountAddr ::= "#nullAct"
+    syntax AccountAddr ::= "#nullAct" [macro]
+    rule #nullAct => accountAddr(#metachainShardId, "system")
     
     syntax Snapshot ::= "#emptySnapshot"
                       | AccountsCell
 
+    syntax Logs ::= ".Logs"
+                  | Logs ";" Log
+    syntax Log ::= TxStep | Transaction
 
 ```
 
@@ -92,7 +97,7 @@ Execute one of these steps:
             <user-txs> (TxL(Tx) => .TxList) ... </user-txs>
             <current-tx> #nullTx => Tx </current-tx>
             ...
-          </shard>
+          </shard>  [label(take-user-action)]
 ```
 
 ### Execute an incoming transaction
@@ -107,7 +112,7 @@ Execute one of these steps:
             </incoming-txs>
             <current-tx> #nullTx => Tx </current-tx>
             ...
-          </shard>
+          </shard> [label(take-incoming-tx)]
 
      rule <steps> #nullTx => . ... </steps>
 
@@ -134,7 +139,7 @@ Execute one of these steps:
             </steps>
             <current-tx> _:ESDTTransfer </current-tx>
             ...
-          </shard>
+          </shard>  [label(esdt-transfer-steps)]
 ```
 
 ### Take snapshot
@@ -147,7 +152,7 @@ Execute one of these steps:
             (ACTS:AccountsCell)
             <snapshot> _ => ACTS </snapshot>
             ...
-          </shard>
+          </shard> [label(take-snapshot)]
 ```
 
 ### Common precondition checks
@@ -159,7 +164,7 @@ Execute one of these steps:
             <steps> #basicChecks => #failure(#ErrInvalidRcvAddr) ... </steps>
             <current-tx> transfer(_, accountAddr(#metachainShardId,_), _, _, _) </current-tx>
             ...
-          </shard>  
+          </shard> [label(check-dest-is-metachain)] 
      
      rule <shard> 
             <steps> #basicChecks => . ... </steps>
@@ -168,11 +173,12 @@ Execute one of these steps:
           </shard>  
           requires accountShard(RCV) =/=Shard #metachainShardId
            andBool 0 <Int Val                             // >
-     
+          [label(check-val-is-positive)]
+
     // TODO: Check Limited Transfer
      syntax TxStep ::= "#checkLimitedTransfer"
     // --------------------------------------------------
-     rule <steps> #checkLimitedTransfer => . ... </steps>
+     rule <steps> #checkLimitedTransfer => . ... </steps> [label(check-limited-transfer)]
 ```
 
 ### Process Sender
@@ -189,6 +195,7 @@ Skip if sender is not at this shard
             ...
           </shard>  
           requires ShrId =/=Shard #txSenderShard(Tx)
+          [label(process-sender-at-dest-shard-skip)]
 ```
 Check gas and token settings, then decrease the sender's balance.
 
@@ -203,6 +210,7 @@ Check gas and token settings, then decrease the sender's balance.
             <current-tx> transfer(accountAddr(ShrId, ActName), _, TokId, Val, _) </current-tx>
             ...
           </shard>
+          [label(process-sender-at-sender-shard)]
 ```
 
 ### Process destination
@@ -220,6 +228,7 @@ If the destination is not at this shard, add the transaction to the output queue
             ...
           </shard>
           requires ShrId =/=Shard #txDestShard(Tx)
+          [label(process-dest-at-sender-shard-out-tx)]
 ```
 
 Perform payable and token settings checks, then, increase the destination account's balance. 
@@ -235,6 +244,7 @@ Perform payable and token settings checks, then, increase the destination accoun
             <current-tx> transfer(_, accountAddr(ShrId, ActName), TokId, Val, _) </current-tx>
             ...
           </shard>
+          [label(process-dest-at-dest-shard)]
 ```
 
 
@@ -247,38 +257,34 @@ If token settings does not exist on this shard, create default token settings
      syntax TxStep ::= #checkTokenSettings(TokenId, AccountName)
   // ---------------------------------------------
      rule <shard>
-            <shard-id> ShrId </shard-id>
             <steps> #checkTokenSettings(TokId,_) ... </steps>
             <token-settings>
-              (.Bag => <token-setting>
-                <token-setting-id> TokId </token-setting-id>
-                <paused> false </paused>
-                <limited> false </limited>
-                <frozen> .Set </frozen>
-              </token-setting>)
-              ...
+              (.Bag => #mkTokenSetting(TokId))
+              REST
             </token-settings>
             ...
           </shard> 
-          requires #settingDoesntExist(ShrId, TokId)
-```
+          requires notBool(TokId in( #localTokenIds(<token-settings> REST </token-settings>) ))
+          [label(create-local-token-settings)]
 
-```k
-    syntax Bool ::= #settingDoesntExist(ShardId, TokenId) [function]
-    rule [[ #settingDoesntExist(ShrId, TokId) => false ]]
-        <shard> 
-          <shard-id> ShrId </shard-id>
-          <token-settings> 
-            <token-setting>
-              <token-setting-id> TokId </token-setting-id>
-              ...
-            </token-setting>
-            ...
-          </token-settings>
-          ...
-        </shard>
-    
-    rule #settingDoesntExist(_,_) => true [owise]
+     syntax Set ::= #localTokenIds(TokenSettingsCell)         [function, functional]
+     rule #localTokenIds(<token-settings> .Bag </token-settings> ) => .Set
+     rule #localTokenIds(<token-settings> 
+                          <token-setting>
+                            <token-setting-id> TokId </token-setting-id>
+                            _
+                          </token-setting> REST 
+                        </token-settings> ) => SetItem(TokId) #localTokenIds(<token-settings> REST </token-settings>)
+
+     syntax TokenSettingCell ::= #mkTokenSetting(TokenId)      [function, functional]
+  // -----------------------------------------------------------------------------------------  
+     rule #mkTokenSetting(TokId) => 
+          <token-setting>
+            <token-setting-id> TokId </token-setting-id>
+            <paused> false </paused>
+            <limited> false </limited>
+            <frozen> .Set </frozen>
+          </token-setting>
 ```
 
 Check Paused
@@ -296,6 +302,7 @@ Check Paused
       </token-settings>
       ...
     </shard>  
+    [label(check-token-is-paused)]
 ```
 
 Check Frozen
@@ -315,6 +322,7 @@ Check Frozen
       ...
     </shard> 
     requires ActName in Frozen
+    [label(account-is-frozen)]
 
     // TODO add check fungible
     rule <shard>
@@ -331,6 +339,7 @@ Check Frozen
       ...
     </shard>  
     requires notBool( ActName in Frozen )
+    [label(pass-check-token-settings)]
 ```
 
 ### Check sender's balance
@@ -351,6 +360,7 @@ Check Frozen
             ...
           </shard>
           requires Val <=Int #getBalance(BALS, TokId)
+          [label(pass-balance-check)]
     
      rule <shard>
             <steps> #checkBalance(ActName, TokId, Val) => #failure(#ErrInsufficientFunds) ... </steps>
@@ -365,6 +375,7 @@ Check Frozen
             ...
           </shard>
           requires #getBalance(BALS, TokId) <Int Val
+          [label(insufficient-balance)]
 ```
 
 ### Payable check
@@ -414,6 +425,7 @@ Check Frozen
             </accounts>
             ...
           </shard>
+          [label(update-balance)]
 
 ```
 ## Finalize transaction
@@ -424,12 +436,13 @@ Log the successful transaction:
      rule <shard> 
             <steps> (#success => .) ~> #finalizeTransaction </steps>
             <current-tx> Tx </current-tx>
-            <logs> ... (. => #success ~> Tx) </logs>
+            <logs> L => (L ; #success ; Tx ) </logs>
             ...
           </shard>
+          [label(finalize-success-log)]
 ```
 
-Send messages to destination shards
+Send messages to destination shards:
 
 ```k
      rule <shard>
@@ -443,7 +456,22 @@ Send messages to destination shards
             <incoming-txs> MQ => push(MQ, SndShrId, Tx) </incoming-txs>
             ...
           </shard>
-          requires DestShrId ==K #txDestShard(Tx)
+          requires DestShrId ==Shard #txDestShard(Tx)
+          [label(relay-cross-shard)]
+```
+
+Send messages to Metachain:
+
+```k
+     rule <meta-incoming> MQ => push(MQ, SndShrId, Tx) </meta-incoming>
+          <shard>
+            <steps> #finalizeTransaction </steps>
+            <shard-id> SndShrId </shard-id>
+            <out-txs> TxL(Tx) => .TxList ... </out-txs>
+            ...
+          </shard>
+          requires #metachainShardId ==Shard #txDestShard(Tx)
+          [label(relay-to-meta)]
 ```
 
 Cleanup
@@ -456,7 +484,7 @@ Cleanup
             <out-txs> .TxList </out-txs>
             ...
           </shard>
-
+          [label(finalize-cleanup)]
 ```
 
 
@@ -471,15 +499,36 @@ Restore to snapshot
             <current-tx> Tx </current-tx>
             <snapshot> ACTS </snapshot>
             (_:AccountsCell => ACTS)
-            <logs> ... (. => #failure(Err) ~> Tx) </logs>
+            <logs> L => (L ; #failure(Err) ; Tx ) </logs>
             ...
           </shard>
+          requires notBool( #isCrossShard(Tx) )
+          [label(finalize-failure-log-revert)]
 
-     rule <steps> #failure(_) ~> (_:TxStep => .) ... </steps>    [owise]
+     rule <shard> 
+            <steps> (#failure(Err) => .) ~> #finalizeTransaction </steps>
+            <current-tx> Tx </current-tx>
+            <snapshot> ACTS </snapshot>
+            (_:AccountsCell => ACTS)
+            <logs> L => (L ; #failure(Err) ; Tx ) </logs>
+            <out-txs> ... (.TxList => TxL(#mkReturnTx(Tx))) </out-txs>
+            ...
+          </shard>
+          requires #isCrossShard(Tx)
+          [label(finalize-failure-log-revert-cross)]
+          
+     rule <steps> #failure(_) ~> (_:TxStep => .) ... </steps>    [owise, label(failure-skip-rest)] 
     
 ```
 
-
+```k
+     syntax Transaction ::= #mkReturnTx(Transaction)       [function, functional]
+  // ------------------------------------------------------------------------------------
+     rule #mkReturnTx(transfer(Sender, Dest, TokId, Val, _)) => transfer(Dest, Sender, TokId, Val, true)
+     rule #mkReturnTx(#nullTx) => #nullTx
+     rule #mkReturnTx(issue(_,_,_) _ ) => #nullTx
+     
+```
 
 ### Helper functions
 
@@ -514,13 +563,13 @@ Restore to snapshot
     rule #txSenderShard(issue(ACT, _, _) _)        => accountShard(ACT)
     rule #txSenderShard(#nullTx)                   => #metachainShardId
 
-    syntax Bool ::= ShardId "=/=Shard" ShardId        [function, functional, smt-hook(distinct)]
+    syntax Bool ::= ShardId "=/=Shard" ShardId        [function, functional]
     rule I:Int             =/=Shard J:Int                   => I =/=Int J
     rule _:Int             =/=Shard #metachainShardId       => true
     rule #metachainShardId =/=Shard _:Int                   => true
     rule #metachainShardId =/=Shard #metachainShardId       => false
     
-    syntax Bool ::= ShardId "==Shard" ShardId        [function, functional, smt-hook(=)]
+    syntax Bool ::= ShardId "==Shard" ShardId        [function, functional]
     rule I:Int             ==Shard J:Int                   => I ==Int J
     rule _:Int             ==Shard #metachainShardId       => false
     rule #metachainShardId ==Shard _:Int                   => false
@@ -528,54 +577,75 @@ Restore to snapshot
 ```
 ## Issue fungible tokens
 
+
+Send built-in call to Metachain
 ```k
-    rule 
-        <meta-transactions> issue(Owner, TokId, Supply) Props:Properties 
-            => #createToken(Owner, TokId, Props ) 
-            ~> #sendInitialSupply(Owner, TokId, Supply)
-            ... 
-        </meta-transactions>
-        requires 0 <=Int Supply  // >
-         andBool #tokenDoesntExist(TokId)
-
-    syntax Bool ::= #tokenDoesntExist(TokenId)      [function]
-    rule [[ #tokenDoesntExist(TokId) => false ]]
-      <global-token-id> TokId </global-token-id>
-    rule #tokenDoesntExist(_) => true           [owise]
-
-
-     syntax KItem ::= "#createToken" "(" AccountAddr "," TokenId "," Properties ")"
-  // ----------------------------------------------------------------------
-     rule <meta-transactions> #createToken(Owner, TokId, Props) => . ... </meta-transactions>
-          <global-token-settings>
-            (.Bag => <global-token-setting>
-                      <global-token-id> TokId </global-token-id>
-                      <global-token-paused> false </global-token-paused>
-                      <global-token-owner> Owner </global-token-owner>
-                      <global-token-props> #makeProperties(Props) </global-token-props>
-                    </global-token-setting>)
+     rule <shard>
+            <steps> 
+              . => #success
+                ~> #finalizeTransaction
+            </steps>
+            <current-tx> Tx:BuiltinCall </current-tx>
+            <out-txs> ... (.TxList => TxL(Tx)) </out-txs>
             ...
-          </global-token-settings>
-    
-
-    
-    
-
-
+          </shard>
 ```
 
+```k
+     rule <meta-incoming> 
+            ...
+            _SndShr M|-> (TxL(Tx) Txs:TxList => Txs) 
+            ... 
+          </meta-incoming>
+          <meta-steps> . => Tx </meta-steps>
 
+     rule <meta-steps> issue(Owner, TokId, Supply) Props => #createToken(Owner, TokId, Props)
+                                                         ~> #sendInitialSupply(Owner, TokId, Supply)
+                                                         ...   
+          </meta-steps> 
+          GTS:GlobalTokenSettingsCell
+          requires 0 <=Int Supply // >
+           andBool notBool( TokId in( #tokenIds(GTS) ) )
+           [label(start-issue-at-meta)]
+
+     syntax Set ::= #tokenIds(GlobalTokenSettingsCell)         [function, functional]
+     rule #tokenIds(<global-token-settings> .Bag </global-token-settings> ) => .Set
+     rule #tokenIds(<global-token-settings> 
+                      <global-token-setting>
+                        <global-token-id> TokId </global-token-id>
+                        _
+                      </global-token-setting> REST 
+                    </global-token-settings> ) => SetItem(TokId) #tokenIds(<global-token-settings> REST </global-token-settings>)
+    
+     syntax KItem ::= "#createToken" "(" AccountAddr "," TokenId "," Properties ")"
+  // ----------------------------------------------------------------------
+     rule <meta-steps> #createToken(Owner, TokId, Props) => . ... </meta-steps>
+          <global-token-settings>
+            (.Bag => #mkGlobalTokenSetting(Owner, TokId, Props))
+            ...
+          </global-token-settings>
+
+     syntax GlobalTokenSettingCell ::= #mkGlobalTokenSetting(AccountAddr, TokenId, Properties)      [function, functional]
+  // -----------------------------------------------------------------------------------------  
+     rule #mkGlobalTokenSetting(Owner, TokId, Props) => 
+            <global-token-setting>
+              <global-token-id> TokId </global-token-id>
+              <global-token-paused> false </global-token-paused>
+              <global-token-owner> Owner </global-token-owner>
+              <global-token-props> #makeProperties(Props) </global-token-props>
+            </global-token-setting>
+```
 
 Send the initial supply to the token owner using the `transfer` function.
 
 ```k
      syntax KItem ::= #sendInitialSupply(AccountAddr, TokenId, Int)
   // ----------------------------------------------------------------------
-     rule <meta-transactions> #sendInitialSupply(Owner, TokId, Supply) 
+     rule <meta-steps> #sendInitialSupply(Owner, TokId, Supply) 
               => #let Tx = transfer(#nullAct, Owner, TokId, Supply, false)
                  #in #metaToShard(accountShard(Owner), Tx) 
                  ...
-          </meta-transactions>
+          </meta-steps>
     
 ```
 
@@ -584,7 +654,7 @@ Send the initial supply to the token owner using the `transfer` function.
 ```k
      syntax KItem ::= #metaToShard(ShardId, Transaction)
   // -------------------------------------------------------------------------------
-     rule <meta-transactions> #metaToShard(ShrId, Tx) => . ... </meta-transactions>
+     rule <meta-steps> #metaToShard(ShrId, Tx) => . ... </meta-steps>
           <shard>
             <shard-id> ShrId </shard-id>
             <incoming-txs> MQ => push(MQ, #metachainShardId, Tx) </incoming-txs>

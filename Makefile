@@ -17,11 +17,13 @@ verification: verification-kompiled/timestamp
 verification-kompiled/timestamp: ${esdt-sources} tests/specs/verification.k 
 	kompile tests/specs/verification.k --backend haskell
 
-spec_files := 	tests/specs/simple-spec.k      	 \
+spec_files := 	tests/specs/functional-spec.k      	 \
+	            tests/specs/simple-spec.k      	 \
 	            tests/specs/cross-dest-spec.k    \
+	            tests/specs/cross-dest-fail-spec.k    \
 	            tests/specs/cross-spec.k     	 \
-				tests/specs/issue-spec.k      	 \
-	            tests/specs/issue-simple-spec.k	 \
+				tests/specs/issue-simple-spec.k      	 \
+	            tests/specs/issue-spec.k      	 \
 
 test: test-prove
 

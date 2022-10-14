@@ -7,54 +7,56 @@ requires "domains.md"
 module ISSUE-SPEC
     imports VERIFICATION
 
-    claim
-      <meta>
-        <meta-transactions>
-          issue(accountAddr(Shr1, A1), TokId:Int, Supply) => .
-        </meta-transactions>
-        <global-token-settings> (.Bag =>
-            <global-token-setting>
-              <global-token-id>     TokId </global-token-id>
-              <global-token-paused> false </global-token-paused>
-              <global-token-owner>  accountAddr(Shr1, A1) </global-token-owner>
-              <global-token-props>  ?_ </global-token-props>
-            </global-token-setting>) ...
+    claim <meta-steps> . </meta-steps>
+          <meta-incoming> .MQueue => (Shr1 M|-> .TxList) </meta-incoming>
+          <global-token-settings> 
+            (.Bag => #mkGlobalTokenSetting(accountAddr(Shr1, A1), TokId, Props) )
+            OtherGlobalTokens
           </global-token-settings>
-      </meta>    
+          
       <shards>
-      <shard>
-        <shard-id> Shr1 </shard-id>
-        <accounts>
-          <account>
-            <account-name> A1 </account-name>
-            <esdt-balances> BALS:Map => ?BALS2 </esdt-balances>
+        <shard>
+          <shard-id> Shr1 </shard-id>
+        // ACCOUNTS
+        // -------------------------------------------------------------------------------
+        
+          <accounts>
+            <account>
+              <account-name> A1 </account-name>
+              <esdt-balances> BALS => BALS [ TokId <- Supply ] /* > */ </esdt-balances>
+              ...
+            </account>
             ...
-          </account>
-          ...    
-        </accounts>
-        <transactions> . </transactions>
-        <current-tx> #nullTx </current-tx>
-        <token-settings>
-            (.Bag => <token-setting>
-                       <token-setting-id> TokId </token-setting-id>
-                       <limited> false </limited>
-                       <paused> false </paused>
-                       <frozen> .Set </frozen>
-                     </token-setting>)
-            ...
-        </token-settings>
-        <out-transfers> . </out-transfers>
-        <snapshot> #emptySnapshot </snapshot>
-        <logs> L => L ~> #success ~> transfer(#nullAct , accountAddr(Shr1, A1), TokId, Supply, false) </logs>
-        ...
-      </shard>
-    </shards>
-      requires #metachainShardId =/=Shard Shr1
-       andBool 0 <Int Supply 
-       andBool notBool( TokId in_keys( BALS ) )
-       andBool #tokenDoesntExist(TokId)
-       andBool #settingDoesntExist(Shr1, TokId)
-      ensures Supply ==Int #getInt(?BALS2, TokId)
-      
+          </accounts>
+        // ACTIONS
+        // --------------------------------------------------------------------------------
+          <user-txs> TxL((issue(accountAddr(Shr1, A1), TokId, Supply) Props) #as Tx) => .TxList </user-txs>
+          <incoming-txs> .MQueue => (#metachainShardId M|-> .TxList) </incoming-txs>
+          <current-tx> #nullTx </current-tx>
+          <steps> . </steps>
+          <out-txs> .TxList </out-txs>
+        
+        // TOKEN CONFIGURATION
+        // --------------------------------------------------------------------------------
+          <token-settings>
+            (.Bag => #mkTokenSetting(TokId) )
+            OtherTokens
+          </token-settings>
 
+        // OTHERS
+        // --------------------------------------------------------------------------------
+          <snapshot> #emptySnapshot </snapshot>
+          <logs> L => (L ; // send builtin call to metachain
+                       #success ; Tx ;
+                        // receive the initial supply
+                       #success ; transfer(#nullAct, accountAddr(Shr1, A1), TokId, Supply, false) )
+          </logs>
+          ...
+        </shard>
+      </shards>
+      requires #metachainShardId =/=Shard Shr1
+       andBool 0 <Int Supply // >
+       andBool notBool( TokId in_keys( BALS ) )
+       andBool notBool( TokId in( #tokenIds(<global-token-settings> OtherGlobalTokens </global-token-settings>) ) )
+       andBool notBool( TokId in( #localTokenIds(<token-settings> OtherTokens </token-settings>) ))
 endmodule

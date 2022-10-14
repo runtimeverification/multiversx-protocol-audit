@@ -7,7 +7,8 @@ module SIMPLE-SPEC
     imports VERIFICATION
 
 // simple single shard successful
-    claim <meta-transactions> . </meta-transactions>
+    claim <meta-steps> . </meta-steps>
+          <meta-incoming> .MQueue </meta-incoming>
     <shards>
       <shard>
         <shard-id> ShrId </shard-id>
@@ -52,12 +53,11 @@ module SIMPLE-SPEC
       // OTHERS
       // --------------------------------------------------------------------------------
         <snapshot> #emptySnapshot </snapshot>
-        <logs> ... (. => #success ~> Tx) </logs>
+        <logs> L => (L ; #success ; Tx ) </logs>
         ...
       </shard>
     </shards>
       requires A1 =/=K A2
-       andBool #metachainShardId =/=Shard ShrId
        andBool notBool(A1 in Frozen)
        andBool notBool(A2 in Frozen)
        andBool 0 <Int Val 
@@ -65,7 +65,8 @@ module SIMPLE-SPEC
        andBool 0 <=Int BAL2
 
 // simple single shard destination is frozen
-    claim <meta-transactions> . </meta-transactions>
+    claim <meta-steps> . </meta-steps>
+          <meta-incoming> .MQueue </meta-incoming>
      <shards>
       <shard>
         <shard-id> ShrId </shard-id>
@@ -109,12 +110,11 @@ module SIMPLE-SPEC
       // OTHERS
       // --------------------------------------------------------------------------------
         <snapshot> #emptySnapshot </snapshot>
-        <logs> ... (. => #failure(#ErrESDTIsFrozenForAccount) ~> Tx) </logs>
+        <logs> L => (L ; #failure(#ErrESDTIsFrozenForAccount) ; Tx) </logs>
         ...
       </shard>
     </shards>
       requires A1 =/=K A2
-       andBool #metachainShardId =/=Shard ShrId
        andBool notBool(A1 in Frozen)
        andBool A2 in Frozen
        andBool 0 <Int Val 

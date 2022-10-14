@@ -3,51 +3,12 @@ requires "verification.k"
 
 requires "domains.md"
 
-// module VERIFICATION
-//     imports K-EQUAL
-//     imports ESDT
-//     imports MAP
-//     imports MAP-SYMBOLIC
-//     imports ML-SYNTAX
-    
-//     rule (K  B|->  V M:BalMap) [ K ] orDefault 0 => V ensures notBool (K in_keys(M)) [simplification]
-//     rule (K  B|->  V M:BalMap) [ K ]             => V ensures notBool (K in_keys(M)) [simplification]
-
-//     // rule ((TokId B|-> Val) Rest:BalMap) [ TokId ] orDefault _:Int => Val 
-//     //   requires notBool( TokId in_keys(Rest))                                [simplification]
-
-//     rule (X B|-> _) M:BalMap [ X <- Y ] => (X B|-> Y) M     requires notBool(X in_keys(M))              [simplification]
-    
-//     rule A +Int (0 -Int B) => A -Int B                                                                  [simplification, smt-lemma]
-//     rule A ==Int A +Int B  => false requires 0 <Int B                                                   [simplification, smt-lemma]
-
-//     // rule #Ceil ( L ~> #success ~> transfer(S, D, T, V, R) ) => #Ceil( L ) 
-//     //                                                       #And #Ceil( S ) 
-//     //                                                       #And #Ceil( D ) 
-//     //                                                       #And #Ceil( T ) 
-//     //                                                       #And #Ceil( V ) 
-//     //                                                       #And #Ceil( R )                    [simplification]
-
-//     // // rule MQ2 #Equals ShrId1 M|-> TxL(_) => #false                           [simplification]
-
-//     // //rule { X #Equals (X ~> #success ~> transfer(_, _, _, _, _))} => #False      
-//     // //  requires #Ceil(X) [simplification]
-  
-//     rule MQ:MQueue ==K ShrId1 M|-> TxL(_) => false requires isEmpty(MQ)    [simplification]
-
-//     // rule X ==Int X +Int Y => false requires 0 <Int Y                       [simplification]
-    
-//     // rule X ==Int X +Int Y => 0 ==Int Y                                     [simplification]
-
-//     // rule 0 ==Int X => false requires 0 <Int X                              [simplification]
-    
-// endmodule
-
 module CROSS-SPEC
     imports VERIFICATION
 
     // simple cross shard successful  
-    claim <meta-transactions> . </meta-transactions>
+    claim <meta-steps> . </meta-steps>
+          <meta-incoming> .MQueue </meta-incoming>
      <shards>
       <shard>
         <shard-id> ShrId1 </shard-id>
@@ -86,7 +47,7 @@ module CROSS-SPEC
       // OTHERS
       // --------------------------------------------------------------------------------
         <snapshot> #emptySnapshot </snapshot>
-        <logs> LOGS1 => LOGS1 ~> #success ~> Tx </logs>
+        <logs> L1 => (L1 ; #success ; Tx ) </logs>
         ...
       </shard>
       <shard>
@@ -105,7 +66,7 @@ module CROSS-SPEC
       // ACTIONS
       // --------------------------------------------------------------------------------
         <user-txs> .TxList </user-txs>
-        <incoming-txs> .MQueue => MQ2:MQueue </incoming-txs>
+        <incoming-txs> .MQueue => (ShrId1 M|-> .TxList) </incoming-txs>
         <steps> . </steps>
         <out-txs> .TxList </out-txs>
         <current-tx> #nullTx </current-tx>
@@ -126,7 +87,7 @@ module CROSS-SPEC
       // OTHERS
       // --------------------------------------------------------------------------------
         <snapshot> #emptySnapshot </snapshot>
-        <logs> LOGS2 => LOGS2 ~> #success ~> Tx </logs>
+        <logs> L2 => (L2 ; #success ; Tx ) </logs>
         ...
       </shard>
     </shards>
@@ -138,7 +99,6 @@ module CROSS-SPEC
        andBool 0 <Int Val
        andBool Val <=Int BAL1
        andBool 0 <=Int BAL2 // >
-       andBool isEmpty(MQ2)
 
 endmodule
 

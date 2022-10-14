@@ -3,7 +3,7 @@ requires "verification.k"
 
 requires "domains.md"
 
-module CROSS-DEST-SPEC
+module CROSS-DEST-FAIL-SPEC
     imports VERIFICATION
 
     // simple cross shard successful  
@@ -17,7 +17,7 @@ module CROSS-DEST-SPEC
         <accounts>
           <account>
             <account-name> A2 </account-name>
-            <esdt-balances> ... TokId B|-> (BAL2 => BAL2 +Int Val) ... </esdt-balances>
+            <esdt-balances> ... TokId B|-> BAL2  ... </esdt-balances>
             ...
           </account>
           ...
@@ -31,9 +31,9 @@ module CROSS-DEST-SPEC
             => 
           (ShrId1 M|-> .TxList )
         </incoming-txs>
-        <steps> . </steps>
-        <out-txs> .TxList </out-txs>
-        <current-tx> #nullTx </current-tx>
+        <steps> . => #finalizeTransaction </steps>
+        <out-txs> .TxList => TxL( #mkReturnTx(Tx) ) </out-txs>
+        <current-tx> #nullTx => Tx </current-tx>
 
       // TOKEN CONFIGURATION
       // --------------------------------------------------------------------------------
@@ -50,17 +50,18 @@ module CROSS-DEST-SPEC
 
       // OTHERS
       // --------------------------------------------------------------------------------
-        <snapshot> #emptySnapshot </snapshot>
-        <logs> L =>( L ; #success ; Tx ) </logs>
+        <snapshot> #emptySnapshot => ?_ </snapshot>
+        <logs> L => (L ; #failure(#ErrESDTIsFrozenForAccount) ; Tx ) </logs>
         ...
       </shard>
     </shards>
       requires ShrId1 =/=Shard ShrId2
        andBool ShrId2 =/=Shard #metachainShardId
-       andBool notBool(A2 in Frozen2)
+       andBool ShrId1 =/=Shard #metachainShardId
+       andBool A2 in Frozen2
        andBool 0 <Int Val
        andBool 0 <=Int BAL2 // >
-
+      
 endmodule
 
  
