@@ -14,9 +14,8 @@ module TXLIST
     syntax TxList ::= TxL(Transaction)             [function, functional, hook(LIST.element), klabel(TxL), symbol, smtlib(smt_seq_elem)]
 
     syntax Bool ::= isEmpty(TxList)              [function, functional]
-    rule isEmpty(.TxList) => true
-    rule isEmpty(_)       => false    [owise]
-
+    rule isEmpty(.TxList)         => true
+    rule isEmpty(TxL(_) _:TxList) => false
 endmodule
 
 module MULTIQUEUE

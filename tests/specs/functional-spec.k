@@ -28,7 +28,31 @@ module FUNCTIONAL-SPEC
         doneLemma(.Set)
         ...
     </meta-steps>
-   
+
+    claim <meta-steps> runLemma( isEmpty(.TxList) ) => doneLemma(true) ... </meta-steps>
+    claim <meta-steps> runLemma( isEmpty(TxL(#nullTx)) ) => doneLemma(false) ... </meta-steps>
+    claim <meta-steps> runLemma( isEmpty(TxL(#nullTx) TxL(_) )  ) => doneLemma(false) ... </meta-steps>
+
+    claim <meta-steps> runLemma( isEmpty(.MQueue) ) => doneLemma(true) ... </meta-steps>
+    claim <meta-steps> 
+        runLemma( isEmpty( 
+            1 M|-> .TxList
+            2 M|-> .TxList
+            3 M|-> .TxList  ) ) 
+        => 
+        doneLemma(true) ... 
+    </meta-steps>
+
+    claim <meta-steps> 
+        runLemma( isEmpty( 
+            1 M|-> .TxList
+            2 M|-> .TxList
+            3 M|-> TxL(_)
+            4 M|-> .TxList  ) ) 
+        => 
+        doneLemma(false) ... 
+    </meta-steps>
+
 
 endmodule
 

@@ -517,7 +517,7 @@ Restore to snapshot
           requires #isCrossShard(Tx)
           [label(finalize-failure-log-revert-cross)]
           
-     rule <steps> #failure(_) ~> (_:TxStep => .) ... </steps>    [owise, label(failure-skip-rest)] 
+     rule <steps> #failure(_) ~> (T:TxStep => .) ... </steps> requires T =/=K #finalizeTransaction    [label(failure-skip-rest)] 
     
 ```
 
