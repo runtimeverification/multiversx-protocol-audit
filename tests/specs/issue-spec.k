@@ -7,8 +7,10 @@ requires "domains.md"
 module ISSUE-SPEC
     imports VERIFICATION
 
-    claim <meta-steps> . </meta-steps>
+    claim <is-running> false </is-running>
+          <meta-steps> . </meta-steps>
           <meta-incoming> .MQueue => (Shr1 M|-> .TxList) </meta-incoming>
+          <meta-out-txs> .TxList </meta-out-txs>
           <global-token-settings> 
             (.Bag => #mkGlobalTokenSetting(accountAddr(Shr1, A1), TokId, Props) )
             OtherGlobalTokens
@@ -49,7 +51,7 @@ module ISSUE-SPEC
           <logs> L => (L ; // send builtin call to metachain
                        #success ; Tx ;
                         // receive the initial supply
-                       #success ; transfer(#nullAct, accountAddr(Shr1, A1), TokId, Supply, false) )
+                       #success ; transfer(#systemAct, accountAddr(Shr1, A1), TokId, Supply, false) )
           </logs>
           ...
         </shard>

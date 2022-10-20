@@ -20,14 +20,16 @@ module ESDT
     
     configuration
       <esdt>
+        <is-running> false </is-running>
         <meta>
           <meta-steps> .K </meta-steps>
           <meta-incoming> .MQueue </meta-incoming>
+          <meta-out-txs> .TxList </meta-out-txs>
           <global-token-settings> 
             <global-token-setting multiplicity="*" type="Map">
               <global-token-id>     0:TokenId </global-token-id>
               <global-token-paused> false </global-token-paused>
-              <global-token-owner>  #nullAct </global-token-owner>
+              <global-token-owner>  #systemAct </global-token-owner>
               <global-token-props>  #defaultTokenProps </global-token-props>
             </global-token-setting>
           </global-token-settings>
@@ -69,8 +71,8 @@ module ESDT
 
     syntax Transaction ::= "#nullTx"
 
-    syntax AccountAddr ::= "#nullAct" [macro]
-    rule #nullAct => accountAddr(#metachainShardId, "system")
+    syntax AccountAddr ::= "#systemAct" [macro]
+    rule #systemAct => accountAddr(#metachainShardId, "system")
     
     syntax Snapshot ::= "#emptySnapshot"
                       | AccountsCell
@@ -92,7 +94,8 @@ Execute one of these steps:
 ### Execute a user action
 
 ```k
-     rule <shard>
+     rule <is-running> false => true </is-running>
+          <shard>
             <steps> . </steps>
             <user-txs> (TxL(Tx) => .TxList) ... </user-txs>
             <current-tx> #nullTx => Tx </current-tx>
@@ -103,7 +106,8 @@ Execute one of these steps:
 ### Execute an incoming transaction
 
 ```k
-     rule <shard>
+     rule <is-running> false => true </is-running>
+          <shard>
             <steps> . </steps>
             <incoming-txs> 
                  ...
@@ -463,7 +467,8 @@ Send messages to destination shards:
 Send messages to Metachain:
 
 ```k
-     rule <meta-incoming> MQ => push(MQ, SndShrId, Tx) </meta-incoming>
+     rule <meta-steps> . </meta-steps>
+          <meta-incoming> MQ => push(MQ, SndShrId, Tx) </meta-incoming>
           <shard>
             <steps> #finalizeTransaction </steps>
             <shard-id> SndShrId </shard-id>
@@ -474,10 +479,11 @@ Send messages to Metachain:
           [label(relay-to-meta)]
 ```
 
-Cleanup
+Cleanup when there is no outgoing transaction.
 
 ```k
-     rule <shard> 
+     rule <is-running> true => false </is-running>
+          <shard> 
             <steps> #finalizeTransaction => . </steps>
             <current-tx> _ => #nullTx </current-tx>
             <snapshot> _ => #emptySnapshot </snapshot>
@@ -598,10 +604,11 @@ Send built-in call to Metachain
             ... 
           </meta-incoming>
           <meta-steps> . => Tx </meta-steps>
+          <is-running> false => true </is-running>
 
      rule <meta-steps> issue(Owner, TokId, Supply) Props => #createToken(Owner, TokId, Props)
                                                          ~> #sendInitialSupply(Owner, TokId, Supply)
-                                                         ...   
+                                                         ~> #finalizeTransaction
           </meta-steps> 
           GTS:GlobalTokenSettingsCell
           requires 0 <=Int Supply // >
@@ -641,26 +648,31 @@ Send the initial supply to the token owner using the `transfer` function.
 ```k
      syntax KItem ::= #sendInitialSupply(AccountAddr, TokenId, Int)
   // ----------------------------------------------------------------------
-     rule <meta-steps> #sendInitialSupply(Owner, TokId, Supply) 
-              => #let Tx = transfer(#nullAct, Owner, TokId, Supply, false)
-                 #in #metaToShard(accountShard(Owner), Tx) 
-                 ...
-          </meta-steps>
+     rule <meta-steps> #sendInitialSupply(Owner, TokId, Supply) => . ... </meta-steps>
+          <meta-out-txs> ... (.TxList => TxL(transfer(#systemAct, Owner, TokId, Supply, false))) </meta-out-txs>
     
+
 ```
 
-### Metashard helpers
+Send messages from Metachain to shards:
 
 ```k
-     syntax KItem ::= #metaToShard(ShardId, Transaction)
-  // -------------------------------------------------------------------------------
-     rule <meta-steps> #metaToShard(ShrId, Tx) => . ... </meta-steps>
+     rule <meta-steps> #finalizeTransaction </meta-steps>
+          <meta-out-txs> TxL(Tx) => .TxList ... </meta-out-txs>
           <shard>
-            <shard-id> ShrId </shard-id>
+            <steps> . </steps>
+            <shard-id> DestShrId </shard-id>
             <incoming-txs> MQ => push(MQ, #metachainShardId, Tx) </incoming-txs>
             ...
           </shard>
+          requires DestShrId ==Shard #txDestShard(Tx)
+          [label(relay-from-meta-to-shard)]
+
+     rule <meta-steps> #finalizeTransaction => . </meta-steps>
+          <meta-out-txs> .TxList </meta-out-txs>
+          <is-running> true => false </is-running>
 ```
+
 
 ```k
 endmodule

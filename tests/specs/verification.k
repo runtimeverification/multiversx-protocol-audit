@@ -1,5 +1,4 @@
 requires "../../esdt.md"
-requires "domains.md"
 
 module VERIFICATION-SYNTAX 
     imports SET 

@@ -7,8 +7,10 @@ module CROSS-DEST-SPEC
     imports VERIFICATION
 
     // simple cross shard successful  
-    claim <meta-steps> . </meta-steps>
+    claim <is-running> false </is-running>
+          <meta-steps> . </meta-steps>
           <meta-incoming> .MQueue </meta-incoming>
+          <meta-out-txs> .TxList </meta-out-txs>
      <shards>
       <shard>
         <shard-id> ShrId2 </shard-id>
