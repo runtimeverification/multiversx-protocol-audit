@@ -54,5 +54,22 @@ module FUNCTIONAL-SPEC
     </meta-steps>
 
 
+    // Token Properties
+    claim <meta-steps> 
+        runLemma( #makeProperties( ) ) => doneLemma(#defaultTokenProps) ... 
+    </meta-steps>
+
+    claim <meta-steps> 
+        runLemma( #makeProperties({ .PropertyList }) ) => doneLemma(#defaultTokenProps) ... 
+    </meta-steps>
+
+    claim <meta-steps> 
+        runLemma( #makeProperties({ canFreeze : true }) ) => doneLemma( #defaultTokenProps [ canFreeze <- true ] ) ... 
+    </meta-steps>
+
+    claim <meta-steps> 
+        runLemma( #makeProperties({ A : B }) ) => doneLemma( #defaultTokenProps [ A <- B ] ) ... 
+    </meta-steps>
+
 endmodule
 

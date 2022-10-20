@@ -15,11 +15,12 @@ module ESDT-SYNTAX
 
     syntax TokenId ::= Int
 
-    syntax Transaction ::= ESDTTransfer
-                         | BuiltinCall
+    syntax Transaction ::= BuiltinCall
+                         | ESDTManage       // SC Calls to the ESDT system SC
 
-    syntax BuiltinCall ::= "issue" "(" AccountAddr "," TokenId "," Int ")" Properties   
-    
+    syntax ESDTManage ::= "issue" "(" AccountAddr "," TokenId "," Int ")" Properties   
+                        | "freeze" "(" AccountAddr "," AccountAddr "," TokenId "," Bool ")"
+
     syntax Properties ::= ""
                         | "{" PropertyList "}"
                         
@@ -28,6 +29,9 @@ module ESDT-SYNTAX
     syntax PropertyName ::= "canFreeze" | "canWipe" | "canPause" | "canMint" | "canBurn" 
                           | "canChangeOwner" | "canUpgrade" | "canAddSpecialRoles"
 
+
+    syntax BuiltinCall ::= ESDTTransfer
+                         | "setFreeze" "(" TokenId "," AccountAddr "," Bool ")"
 
     syntax ESDTTransfer ::= transfer( AccountAddr, AccountAddr, TokenId, Int, Bool )
     

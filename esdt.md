@@ -532,7 +532,7 @@ Restore to snapshot
   // ------------------------------------------------------------------------------------
      rule #mkReturnTx(transfer(Sender, Dest, TokId, Val, _)) => transfer(Dest, Sender, TokId, Val, true)
      rule #mkReturnTx(#nullTx) => #nullTx
-     rule #mkReturnTx(issue(_,_,_) _ ) => #nullTx
+     rule #mkReturnTx(_:ESDTManage) => #nullTx
      
 ```
 
@@ -561,12 +561,21 @@ Restore to snapshot
     
     syntax ShardId ::= #txDestShard(Transaction)        [function, functional]
                      | #txSenderShard(Transaction)      [function, functional]
+    // builtin functions
     rule #txDestShard(transfer(_, ACT, _, _, _))   => accountShard(ACT)
-    rule #txDestShard(issue(_, _, _) _)            => #metachainShardId    
+    rule #txDestShard(setFreeze(_, ACT, _))        => accountShard(ACT)
+    // esdt SC calls
+    rule #txDestShard(_:ESDTManage)                => #metachainShardId    
+    //
     rule #txDestShard(#nullTx)                     => #metachainShardId
 
+    // builtin functions
     rule #txSenderShard(transfer(ACT, _, _, _, _)) => accountShard(ACT)    
-    rule #txSenderShard(issue(ACT, _, _) _)        => accountShard(ACT)
+    rule #txSenderShard(setFreeze(_, _, _))        => #metachainShardId    
+    // esdt SC calls
+    rule #txSenderShard(issue(ACT, _, _) _)        => accountShard(ACT)    
+    rule #txSenderShard(freeze(ACT, _, _, _))      => accountShard(ACT)
+    //
     rule #txSenderShard(#nullTx)                   => #metachainShardId
 
     syntax Bool ::= ShardId "=/=Shard" ShardId        [function, functional]
@@ -581,23 +590,24 @@ Restore to snapshot
     rule #metachainShardId ==Shard _:Int                   => false
     rule #metachainShardId ==Shard #metachainShardId       => true     
 ```
-## Issue fungible tokens
+## ESDT Management Functions
 
 
-Send built-in call to Metachain
+Send ESDT management operations to the system SC on Metachain
+
 ```k
      rule <shard>
             <steps> 
               . => #success
                 ~> #finalizeTransaction
             </steps>
-            <current-tx> Tx:BuiltinCall </current-tx>
+            <current-tx> Tx:ESDTManage </current-tx>
             <out-txs> ... (.TxList => TxL(Tx)) </out-txs>
             ...
           </shard>
-```
+          [label(esdtmanage-to-output)]
 
-```k
+
      rule <meta-incoming> 
             ...
             _SndShr M|-> (TxL(Tx) Txs:TxList => Txs) 
@@ -605,6 +615,12 @@ Send built-in call to Metachain
           </meta-incoming>
           <meta-steps> . => Tx </meta-steps>
           <is-running> false => true </is-running>
+          [label(meta-take-incoming-tx)]
+```
+
+### Issue fungible tokens
+
+```k
 
      rule <meta-steps> issue(Owner, TokId, Supply) Props => #createToken(Owner, TokId, Props)
                                                          ~> #sendInitialSupply(Owner, TokId, Supply)
@@ -650,8 +666,52 @@ Send the initial supply to the token owner using the `transfer` function.
   // ----------------------------------------------------------------------
      rule <meta-steps> #sendInitialSupply(Owner, TokId, Supply) => . ... </meta-steps>
           <meta-out-txs> ... (.TxList => TxL(transfer(#systemAct, Owner, TokId, Supply, false))) </meta-out-txs>
-    
+```
 
+### Freeze/Unfreeze
+
+At Metachain, check the ownership and token properties. Then, call the builtin function `freeze` at the destination account's shard.
+
+```k
+
+     rule <meta-steps> freeze(Caller, OtherAct, TokId, Val) => #finalizeTransaction
+          </meta-steps> 
+          <global-token-settings>
+            <global-token-setting>
+              <global-token-id> TokId </global-token-id>
+              <global-token-owner> Caller </global-token-owner>
+              <global-token-props> ... canFreeze P|-> true ... </global-token-props>
+              ...
+            </global-token-setting>
+            ...
+          </global-token-settings>
+          <meta-out-txs> ... (.TxList => TxL( setFreeze(TokId, OtherAct, Val) ) ) </meta-out-txs>
+          [label(freeze-at-meta)]
+```
+
+At the destination shard, update the set of frozen accounts.
+
+```k
+     rule <shard>
+            <steps> 
+              . => #success
+                ~> #finalizeTransaction
+            </steps>
+            <current-tx> setFreeze(TokId, accountAddr(_, ActName), Val) </current-tx>
+            <token-settings>
+              <token-setting>
+                <token-setting-id> TokId </token-setting-id>
+                <frozen> Frozen => #updateFrozen(Frozen, ActName, Val) </frozen>
+                ...
+              </token-setting>
+              ...
+            </token-settings>
+            ...
+          </shard>  [label(freeze-steps)]
+
+     syntax Set ::= "#updateFrozen" "(" Set "," AccountName "," Bool ")" [function, functional]
+     rule #updateFrozen(Frozen, ActName, true)  => Frozen SetItem(ActName)
+     rule #updateFrozen(Frozen, ActName, false) => Frozen -Set (SetItem(ActName))
 ```
 
 Send messages from Metachain to shards:

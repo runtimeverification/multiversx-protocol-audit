@@ -24,6 +24,7 @@ spec_files := 	tests/specs/functional-spec.k      	 \
 	            tests/specs/cross-spec.k     	 \
 				tests/specs/issue-simple-spec.k      	 \
 	            tests/specs/issue-spec.k      	 \
+	            tests/specs/freeze-spec.k      	 \
 
 test: test-prove
 

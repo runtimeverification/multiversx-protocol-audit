@@ -2,10 +2,11 @@ requires "../../esdt.md"
 
 module VERIFICATION-SYNTAX 
     imports SET 
+    imports ESDT 
 
-    syntax KItem ::= runLemma ( Step ) | doneLemma ( Step )
+    syntax KItem ::= runLemma ( KItem ) | doneLemma ( KItem )
 
-    syntax Step ::= Bool | Int | Set
+    // syntax Step ::= Bool | Int | Set | 
 
 endmodule
 
@@ -49,5 +50,7 @@ module VERIFICATION
                               </global-token-setting> _
                             </global-token-settings> ) => true                                               [simplification]
 
+
+    rule A in (_S1 -Set S2) => false requires A in S2    [simplification]
 
 endmodule
