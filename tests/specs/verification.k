@@ -25,6 +25,12 @@ module VERIFICATION
     
     rule M:BalMap [ X ] orDefault Y => Y                             requires notBool(X in_keys(M))         [simplification]
 
+    rule (P1:PropMap P2:PropMap) [A] => true requires P1[A] andBool P2[A] [simplification]
+
+    rule (P1:PropMap P2:PropMap) P2[A] => true requires notBool(A in_keys(P1)) [simplification]
+
+    rule (P1:PropMap (A P|-> B)) [A] => B requires notBool(A in_keys(P1))  [simplification]
+
     rule A +Int (0 -Int B) => A -Int B                                                                      [simplification]
     
     rule MQ:MQueue ==K (_:ShardId M|-> TxL(_)) => false              requires isEmpty(MQ)                   [simplification]
@@ -52,5 +58,10 @@ module VERIFICATION
 
 
     rule A in (_S1 -Set S2) => false requires A in S2    [simplification]
+
+    rule ((A M|-> B) Rest:MQueue) [ A ] => B requires notBool(A in_keys(Rest)) [simplification] // >
+    rule ((A M|-> _) Rest:MQueue) [ A <- B ] => ((A M|-> B) Rest:MQueue) requires notBool(A in_keys(Rest)) [simplification]
+
+    rule (_MAP:PropMap [ K  <-  V1 ]) [ K ]  => V1 [simplification]
 
 endmodule

@@ -680,12 +680,13 @@ At Metachain, check the ownership and token properties. Then, call the builtin f
             <global-token-setting>
               <global-token-id> TokId </global-token-id>
               <global-token-owner> Caller </global-token-owner>
-              <global-token-props> ... canFreeze P|-> true ... </global-token-props>
+              <global-token-props> Props </global-token-props>
               ...
             </global-token-setting>
             ...
           </global-token-settings>
           <meta-out-txs> ... (.TxList => TxL( setFreeze(TokId, OtherAct, Val) ) ) </meta-out-txs>
+          requires Props [canFreeze]
           [label(freeze-at-meta)]
 ```
 
@@ -707,14 +708,33 @@ At the destination shard, update the set of frozen accounts.
               ...
             </token-settings>
             ...
-          </shard>  [label(freeze-steps)]
+          </shard>  [label(freeze-at-shard)]
 
      syntax Set ::= "#updateFrozen" "(" Set "," AccountName "," Bool ")" [function, functional]
      rule #updateFrozen(Frozen, ActName, true)  => Frozen SetItem(ActName)
      rule #updateFrozen(Frozen, ActName, false) => Frozen -Set (SetItem(ActName))
 ```
 
-Send messages from Metachain to shards:
+### Upgrade properties
+
+```k
+
+     rule <meta-steps> controlChanges(Caller, TokId) Props => #finalizeTransaction
+          </meta-steps> 
+          <global-token-settings>
+            <global-token-setting>
+              <global-token-id> TokId </global-token-id>
+              <global-token-owner> Caller </global-token-owner>
+              <global-token-props> TokProps => #updateProps(TokProps, Props) </global-token-props>
+              ...
+            </global-token-setting>
+            ...
+          </global-token-settings>
+          requires TokProps [ canUpgrade ]
+          [label(controlChanges-at-meta)]
+```
+
+### Send messages from Metachain to shards:
 
 ```k
      rule <meta-steps> #finalizeTransaction </meta-steps>

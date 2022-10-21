@@ -20,6 +20,7 @@ module ESDT-SYNTAX
 
     syntax ESDTManage ::= "issue" "(" AccountAddr "," TokenId "," Int ")" Properties   
                         | "freeze" "(" AccountAddr "," AccountAddr "," TokenId "," Bool ")"
+                        | "controlChanges" "(" AccountAddr "," TokenId ")" Properties
 
     syntax Properties ::= ""
                         | "{" PropertyList "}"

@@ -144,10 +144,8 @@ module TOKENPROPS
     syntax PropMap ::= "#makeProperties" "(" Properties ")" [function, functional]
                      | "#makePropertiesH" "(" PropMap "," PropertyList ")" [function, functional]
     rule #makeProperties( )      => #defaultTokenProps
-    rule #makeProperties({ Ps }) => #makePropertiesH(#defaultTokenProps, Ps)
-    rule #makePropertiesH(Acc, .PropertyList) => Acc
-    rule #makePropertiesH(Acc, (P : V, Ps:PropertyList)) => #makePropertiesH(Acc [P <- V], Ps )         // >
-
+    rule #makeProperties({ Ps }) => #updatePropsH(#defaultTokenProps, Ps)
+    
     syntax PropMap ::= "#defaultTokenProps" [macro]
     rule #defaultTokenProps => ( canFreeze          P|-> false 
                                  canWipe            P|-> false 
@@ -158,6 +156,14 @@ module TOKENPROPS
                                  canUpgrade         P|-> true 
                                  canAddSpecialRoles P|-> true)
 
+    syntax PropMap ::= #updateProps(PropMap, Properties)        [function, functional]
+                     | #updatePropsH(PropMap, PropertyList)     [function, functional]
+    rule #updateProps(PMap, ) => PMap
+    rule #updateProps(PMap, { Ps:PropertyList }) => #updatePropsH(PMap, Ps)
+    rule #updatePropsH(PMap, .PropertyList) => PMap
+    rule #updatePropsH(PMap, (P:V, Ps)) => #updatePropsH(PMap [P <- V], Ps)
+     
+    // >
 endmodule
 
 module CONTAINERS
