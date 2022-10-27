@@ -150,8 +150,6 @@ module TOKENPROPS
     rule #defaultTokenProps => ( canFreeze          P|-> false 
                                  canWipe            P|-> false 
                                  canPause           P|-> false 
-                                 canMint            P|-> false 
-                                 canBurn            P|-> false 
                                  canChangeOwner     P|-> false 
                                  canUpgrade         P|-> true 
                                  canAddSpecialRoles P|-> true)
@@ -172,9 +170,6 @@ module CONTAINERS
     imports BALANCEMAP
     imports TOKENPROPS
 endmodule
-
-
-
 ```
 
 

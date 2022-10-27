@@ -17,6 +17,7 @@ module VERIFICATION
     imports ESDT
     imports MAP
     imports MAP-SYMBOLIC
+    imports SET-SYMBOLIC
     imports ML-SYNTAX
     
     rule (K  B|->  V M:BalMap) [ K ] orDefault _ => V                requires notBool (K in_keys(M))        [simplification]
@@ -40,28 +41,17 @@ module VERIFICATION
     
     rule <meta-steps> runLemma(S) => doneLemma(S) ... </meta-steps> [priority(1)]
 
-    rule A <=Int B => true requires A <Int B                                                                [simplification]
+    rule A <=Int B => true requires A <Int B         [simplification] // >
 
-    rule TokId in #localTokenIds( <token-settings>
-                                    <token-setting>
-                                      <token-setting-id> TokId </token-setting-id>
-                                      _
-                                    </token-setting> _
-                                  </token-settings> ) => true                                               [simplification]
-
-    rule TokId in #tokenIds(<global-token-settings>
-                              <global-token-setting>
-                                <global-token-id> TokId </global-token-id>
-                                _
-                              </global-token-setting> _
-                            </global-token-settings> ) => true                                               [simplification]
-
-
-    rule A in (_S1 -Set S2) => false requires A in S2    [simplification]
+    rule A -Int B +Int B => A [simplification]
 
     rule ((A M|-> B) Rest:MQueue) [ A ] => B requires notBool(A in_keys(Rest)) [simplification] // >
     rule ((A M|-> _) Rest:MQueue) [ A <- B ] => ((A M|-> B) Rest:MQueue) requires notBool(A in_keys(Rest)) [simplification]
 
-    rule (_MAP:PropMap [ K  <-  V1 ]) [ K ]  => V1 [simplification]
+    rule (_MAP:PropMap [ K  <-  V1 ]) [ K ]  => V1        [simplification]
+
+    rule X in( SetItem(Y) ) => false requires X =/=K Y                   [simplification]
+    
+    rule A in (_S1 -Set S2) => false requires A in S2    [simplification]
 
 endmodule

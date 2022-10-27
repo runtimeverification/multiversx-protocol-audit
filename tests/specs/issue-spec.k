@@ -60,5 +60,5 @@ module ISSUE-SPEC
        andBool 0 <Int Supply // >
        andBool notBool( TokId in_keys( BALS ) )
        andBool notBool( TokId in( #tokenIds(<global-token-settings> OtherGlobalTokens </global-token-settings>) ) )
-       andBool notBool( TokId in( #localTokenIds(<token-settings> OtherTokens </token-settings>) ))
+       andBool notBool( #tokenSettingExists(TokId, <token-settings> OtherTokens </token-settings>) )
 endmodule

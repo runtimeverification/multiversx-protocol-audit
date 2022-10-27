@@ -4,7 +4,7 @@ requires "verification.k"
 requires "domains.md"
 
 
-module FREEZE-SPEC
+module PAUSE-SPEC
     imports VERIFICATION
 
     claim <is-running> false </is-running>
@@ -15,7 +15,7 @@ module FREEZE-SPEC
             <global-token-setting>
               <global-token-id> TokId </global-token-id>
               <global-token-owner> accountAddr(Shr1, A1) </global-token-owner>
-              <global-token-props> ... canFreeze P|-> true ... </global-token-props>
+              <global-token-props> ... canPause P|-> true ... </global-token-props>
               ...
             </global-token-setting>
             ...
@@ -27,7 +27,7 @@ module FREEZE-SPEC
         
         // ACTIONS
         // --------------------------------------------------------------------------------
-          <user-txs> TxL( freeze(  accountAddr(Shr1, A1), accountAddr(Shr1, A2), TokId, true) #as Tx) => .TxList </user-txs>
+          <user-txs> TxL( pause(  accountAddr(Shr1, A1), TokId, true) #as Tx) => .TxList </user-txs>
           <incoming-txs> .MQueue => (#metachainShardId M|-> .TxList) </incoming-txs>
           <current-tx> #nullTx </current-tx>
           <steps> . </steps>
@@ -38,7 +38,7 @@ module FREEZE-SPEC
           <token-settings>
             <token-setting>
               <token-setting-id> TokId </token-setting-id>
-              <frozen> _ => ?Frozen </frozen>
+              <paused> _ => true </paused>
               ...
             </token-setting>
             ...
@@ -50,34 +50,17 @@ module FREEZE-SPEC
           <logs> L => (L ; // send builtin call to metachain
                        #success ; Tx ;
                         // execute the builtin call from metachain
-                       #success ; doFreeze(TokId, accountAddr(Shr1, A2), true) )
+                       #success ; doPause(Shr1, TokId, true) )
           </logs>
           ...
         </shard>
-      </shards>
-      ensures A2 in ?Frozen
-
-    claim <is-running> false </is-running>
-          <meta-steps> . </meta-steps>
-          <meta-incoming> .MQueue => (Shr1 M|-> .TxList) </meta-incoming>
-          <meta-out-txs> .TxList </meta-out-txs>
-          <global-token-settings> 
-            <global-token-setting>
-              <global-token-id> TokId </global-token-id>
-              <global-token-owner> accountAddr(Shr1, A1) </global-token-owner>
-              <global-token-props> ... canFreeze P|-> true ... </global-token-props>
-              ...
-            </global-token-setting>
-            ...
-          </global-token-settings>
-          
-      <shards>
+        ///////////////////////////////////////////////////////////////////////////////////
         <shard>
-          <shard-id> Shr1 </shard-id>
+          <shard-id> Shr2 </shard-id>
         
         // ACTIONS
         // --------------------------------------------------------------------------------
-          <user-txs> TxL( freeze(  accountAddr(Shr1, A1), accountAddr(Shr1, A2), TokId, false) #as Tx) => .TxList </user-txs>
+          <user-txs> .TxList </user-txs>
           <incoming-txs> .MQueue => (#metachainShardId M|-> .TxList) </incoming-txs>
           <current-tx> #nullTx </current-tx>
           <steps> . </steps>
@@ -88,7 +71,7 @@ module FREEZE-SPEC
           <token-settings>
             <token-setting>
               <token-setting-id> TokId </token-setting-id>
-              <frozen> _ => ?Frozen </frozen>
+              <paused> _ => true </paused>
               ...
             </token-setting>
             ...
@@ -97,14 +80,14 @@ module FREEZE-SPEC
         // OTHERS
         // --------------------------------------------------------------------------------
           <snapshot> #emptySnapshot </snapshot>
-          <logs> L => (L ; // send builtin call to metachain
-                       #success ; Tx ;
+          <logs> L2 => (L2 ;
                         // execute the builtin call from metachain
-                       #success ; doFreeze(TokId, accountAddr(Shr1, A2), false) )
+                       #success ; doPause(Shr2, TokId, true) )
           </logs>
           ...
         </shard>
       </shards>
-      ensures notBool (A2 in ?Frozen)
+      requires Shr1 =/=Shard Shr2
+    
 
 endmodule

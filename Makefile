@@ -22,9 +22,11 @@ spec_files := 	tests/specs/functional-spec.k      	 \
 	            tests/specs/cross-dest-spec.k    \
 	            tests/specs/cross-dest-fail-spec.k    \
 	            tests/specs/cross-spec.k     	 \
+	            tests/specs/cross-return-spec.k     	 \
 				tests/specs/issue-simple-spec.k      	 \
 	            tests/specs/issue-spec.k      	 \
 	            tests/specs/freeze-spec.k      	 \
+	            tests/specs/pause-spec.k      	 \
 	            tests/specs/upgrade-freeze-spec.k      	 \
 
 test: test-prove
@@ -36,5 +38,6 @@ tests/specs/%.prove: verification-kompiled/timestamp
 
 clean:
 	rm -r .kprove* \
+	      .krun* \
 	      esdt-kompiled \
 		  verification-kompiled

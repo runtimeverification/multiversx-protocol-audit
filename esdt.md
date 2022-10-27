@@ -9,14 +9,12 @@ requires "errors.md"
 
 module ESDT
     imports ESDT-SYNTAX
-    imports MAP
-    imports SET
+    imports COLLECTIONS
     imports BOOL
     imports INT
     imports K-EQUAL
     imports CONTAINERS
     imports ERRORS
-    imports LIST
     
     configuration
       <esdt>
@@ -134,6 +132,7 @@ Execute one of these steps:
      rule <shard>
             <steps> 
               . => #takeSnapshot
+                ~> #createDefaultTokenSettings(TokId)
                 ~> #basicChecks
                 ~> #checkLimitedTransfer
                 ~> #processSender
@@ -141,7 +140,7 @@ Execute one of these steps:
                 ~> #success
                 ~> #finalizeTransaction
             </steps>
-            <current-tx> _:ESDTTransfer </current-tx>
+            <current-tx> transfer(_, _, TokId, _, _) </current-tx>
             ...
           </shard>  [label(esdt-transfer-steps)]
 ```
@@ -258,27 +257,44 @@ Perform payable and token settings checks, then, increase the destination accoun
 If token settings does not exist on this shard, create default token settings
     
 ```k   
-     syntax TxStep ::= #checkTokenSettings(TokenId, AccountName)
-  // ---------------------------------------------
+     syntax TxStep ::= #createDefaultTokenSettings(TokenId)
+  // ------------------------------------------------------
      rule <shard>
-            <steps> #checkTokenSettings(TokId,_) ... </steps>
+            <steps> #createDefaultTokenSettings(TokId) => . ... </steps>
             <token-settings>
               (.Bag => #mkTokenSetting(TokId))
               REST
             </token-settings>
             ...
           </shard> 
-          requires notBool(TokId in( #localTokenIds(<token-settings> REST </token-settings>) ))
-          [label(create-local-token-settings)]
+          requires notBool(#tokenSettingExists(TokId, <token-settings> REST </token-settings>) )
+          [label(create-default-token-settings)]
+     
+     rule <shard>
+            <steps> #createDefaultTokenSettings(TokId) => . ... </steps>
+            TokSettings:TokenSettingsCell
+            ...
+          </shard> 
+          requires #tokenSettingExists(TokId, TokSettings)
+          [label(skip-default-token-settings)]
 
-     syntax Set ::= #localTokenIds(TokenSettingsCell)         [function, functional]
-     rule #localTokenIds(<token-settings> .Bag </token-settings> ) => .Set
-     rule #localTokenIds(<token-settings> 
-                          <token-setting>
-                            <token-setting-id> TokId </token-setting-id>
-                            _
-                          </token-setting> REST 
-                        </token-settings> ) => SetItem(TokId) #localTokenIds(<token-settings> REST </token-settings>)
+     syntax Bool ::= #tokenSettingExists(TokenId, TokenSettingsCell)         [function, functional]
+     rule #tokenSettingExists(_, <token-settings> .Bag </token-settings> ) => false
+     rule #tokenSettingExists(TokId, <token-settings> 
+                                        <token-setting>
+                                          <token-setting-id> TokId </token-setting-id>
+                                          _
+                                        </token-setting> _ 
+                                      </token-settings> ) => true
+     rule #tokenSettingExists(TokId, <token-settings> 
+                                        <token-setting>
+                                          <token-setting-id> TokId2 </token-setting-id>
+                                          _
+                                        </token-setting> REST 
+                                      </token-settings> ) 
+          => #tokenSettingExists(TokId, <token-settings> 
+                                          REST 
+                                        </token-settings>) requires TokId =/=K TokId2
 
      syntax TokenSettingCell ::= #mkTokenSetting(TokenId)      [function, functional]
   // -----------------------------------------------------------------------------------------  
@@ -294,19 +310,21 @@ If token settings does not exist on this shard, create default token settings
 Check Paused
 
 ```k
-    rule <shard>
-      <steps> #checkTokenSettings(TokId,_) => #failure(#ErrTokenIsPaused) ... </steps>
-      <token-settings>
-        <token-setting>
-          <token-setting-id> TokId </token-setting-id>
-          <paused> true </paused>
-          ...
-        </token-setting>
-        ...
-      </token-settings>
-      ...
-    </shard>  
-    [label(check-token-is-paused)]
+     syntax TxStep ::= #checkTokenSettings(TokenId, AccountName)
+  // -----------------------------------------------------------  
+     rule <shard>
+            <steps> #checkTokenSettings(TokId,_) => #failure(#ErrTokenIsPaused) ... </steps>
+            <token-settings>
+              <token-setting>
+                <token-setting-id> TokId </token-setting-id>
+                <paused> true </paused>
+                ...
+              </token-setting>
+              ...
+            </token-settings>
+            ...
+          </shard>  
+          [label(check-token-is-paused)]
 ```
 
 Check Frozen
@@ -563,7 +581,8 @@ Restore to snapshot
                      | #txSenderShard(Transaction)      [function, functional]
     // builtin functions
     rule #txDestShard(transfer(_, ACT, _, _, _))   => accountShard(ACT)
-    rule #txDestShard(setFreeze(_, ACT, _))        => accountShard(ACT)
+    rule #txDestShard(doFreeze(_, ACT, _))        => accountShard(ACT)
+    rule #txDestShard(doPause(ShrId, _, _))       => ShrId
     // esdt SC calls
     rule #txDestShard(_:ESDTManage)                => #metachainShardId    
     //
@@ -571,7 +590,7 @@ Restore to snapshot
 
     // builtin functions
     rule #txSenderShard(transfer(ACT, _, _, _, _)) => accountShard(ACT)    
-    rule #txSenderShard(setFreeze(_, _, _))        => #metachainShardId    
+    rule #txSenderShard(doFreeze(_, _, _))        => #metachainShardId    
     // esdt SC calls
     rule #txSenderShard(issue(ACT, _, _) _)        => accountShard(ACT)    
     rule #txSenderShard(freeze(ACT, _, _, _))      => accountShard(ACT)
@@ -685,7 +704,7 @@ At Metachain, check the ownership and token properties. Then, call the builtin f
             </global-token-setting>
             ...
           </global-token-settings>
-          <meta-out-txs> ... (.TxList => TxL( setFreeze(TokId, OtherAct, Val) ) ) </meta-out-txs>
+          <meta-out-txs> ... (.TxList => TxL( doFreeze(TokId, OtherAct, Val) ) ) </meta-out-txs>
           requires Props [canFreeze]
           [label(freeze-at-meta)]
 ```
@@ -695,25 +714,127 @@ At the destination shard, update the set of frozen accounts.
 ```k
      rule <shard>
             <steps> 
-              . => #success
+              . => #createDefaultTokenSettings(TokId)
+                ~> #updateFrozen
+                ~> #success
                 ~> #finalizeTransaction
             </steps>
-            <current-tx> setFreeze(TokId, accountAddr(_, ActName), Val) </current-tx>
+            <current-tx> doFreeze(TokId, _, _) </current-tx>
+            ...
+          </shard>  [label(freeze-at-shard)]
+
+     syntax TxStep ::= "#updateFrozen"
+     rule <shard>
+            <steps> #updateFrozen => . ... </steps>
+            <current-tx> doFreeze(TokId, accountAddr(_, ActName), true) </current-tx>
             <token-settings>
               <token-setting>
                 <token-setting-id> TokId </token-setting-id>
-                <frozen> Frozen => #updateFrozen(Frozen, ActName, Val) </frozen>
+                <frozen> Frozen => Frozen |Set SetItem(ActName) </frozen>
                 ...
               </token-setting>
               ...
             </token-settings>
             ...
-          </shard>  [label(freeze-at-shard)]
-
-     syntax Set ::= "#updateFrozen" "(" Set "," AccountName "," Bool ")" [function, functional]
-     rule #updateFrozen(Frozen, ActName, true)  => Frozen SetItem(ActName)
-     rule #updateFrozen(Frozen, ActName, false) => Frozen -Set (SetItem(ActName))
+          </shard>
+          [label(frozen-add)]
+     
+     rule <shard>
+            <steps> #updateFrozen => . ... </steps>
+            <current-tx> doFreeze(TokId, accountAddr(_, ActName), false) </current-tx>
+            <token-settings>
+              <token-setting>
+                <token-setting-id> TokId </token-setting-id>
+                <frozen> Frozen => Frozen -Set SetItem(ActName) </frozen>
+                ...
+              </token-setting>
+              ...
+            </token-settings>
+            ...
+          </shard>
+          [label(frozen-remove)]
 ```
+
+### Pause/Unpause
+
+At Metachain, check the ownership and token properties. Then, call the builtin function `freeze` at the destination account's shard.
+
+```k
+
+     rule <meta-steps> pause(Caller, TokId, Val) => pauseShards(TokId, Val, .Set)
+                                                 ~> #finalizeTransaction
+          </meta-steps> 
+          <global-token-settings>
+            <global-token-setting>
+              <global-token-id> TokId </global-token-id>
+              <global-token-owner> Caller </global-token-owner>
+              <global-token-props> Props </global-token-props>
+              ...
+            </global-token-setting>
+            ...
+          </global-token-settings>
+          requires Props [canPause]
+          [label(pause-at-meta)]
+     
+//     syntax Set ::= getShardIds(ShardsCell)     [function, functional]
+//     rule getShardIds(<shards> Shard:ShardCell Rest </shards>) 
+//        => getShardIds(<shards> Rest </shards>) |Set SetItem(getShardId(Shard)) 
+//     rule getShardIds(<shards> .Bag </shards>) 
+//        => .Set 
+
+
+     syntax KItem ::= pauseShards(TokenId, Bool, Set)
+     rule <meta-steps>
+            pauseShards(TokId, Val, Paused)
+            => pauseShards(TokId, Val, Paused SetItem(ShrId) ) ... 
+          </meta-steps>
+          <meta-out-txs> 
+            ... (.TxList => TxL( doPause(ShrId, TokId, Val)) )  
+          </meta-out-txs>
+          <shard>
+            <shard-id> ShrId </shard-id>
+            ...
+          </shard>
+          requires notBool (ShrId in(Paused))
+          [label(pauseShards-rec)]
+
+     rule <meta-steps> pauseShards(_, _, _) => . ... </meta-steps>
+          [priority(160), label(pauseShards-nil)] // has lower priority than the above and higher than owise
+          
+//     syntax ShardId ::= getShardId(ShardCell)   [function, functional]
+//     rule getShardId(<shard><shard-id> ID </shard-id> _</shard>) => ID
+```
+
+At the destination shard, pause the token.
+
+```k
+     rule <shard>
+            <steps> 
+              . => #createDefaultTokenSettings(TokId)
+                ~> #updatePause
+                ~> #success
+                ~> #finalizeTransaction
+            </steps>
+            <current-tx> doPause(_, TokId, _) </current-tx>
+            ...
+          </shard>  [label(pause-at-shard)]
+
+     syntax TxStep ::= "#updatePause"
+     rule <shard>
+            <steps> #updatePause => . ... </steps>
+            <current-tx> doPause(_, TokId, Val) </current-tx>
+            <token-settings>
+              <token-setting>
+                <token-setting-id> TokId </token-setting-id>
+                <paused> _ => Val </paused>
+                ...
+              </token-setting>
+              ...
+            </token-settings>
+            ...
+          </shard>  [label(update-pause)]
+```
+
 
 ### Upgrade properties
 

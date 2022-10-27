@@ -54,7 +54,7 @@ module UPGRADE-FREEZE-SPEC
                        #success ; Tx1 ;
                        #success ; Tx2 ;
                         // receive the initial supply
-                       #success ; setFreeze(TokId, accountAddr(Shr1, A2), true) )
+                       #success ; doFreeze(TokId, accountAddr(Shr1, A2), true) )
           </logs>
           ...
         </shard>

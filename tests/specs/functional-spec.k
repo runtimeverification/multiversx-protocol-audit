@@ -9,8 +9,6 @@ requires "domains.md"
 module FUNCTIONAL-SPEC
     imports VERIFICATION
 
-
-
     claim <meta-steps>
         runLemma( #tokenIds(<global-token-settings>
             .Bag
@@ -21,13 +19,36 @@ module FUNCTIONAL-SPEC
     </meta-steps>
     
     claim <meta-steps>
-        runLemma( #localTokenIds(<token-settings>
+        runLemma( #tokenSettingExists(_, <token-settings>
             .Bag
         </token-settings>))
             =>
-        doneLemma(.Set)
+        doneLemma(false)
         ...
     </meta-steps>
+
+    claim <meta-steps>
+        runLemma( #tokenSettingExists(TokId, <token-settings>
+            <token-setting>
+              <token-setting-id>
+                TokId
+              </token-setting-id>
+              <limited>
+                false
+              </limited>
+              <paused>
+                false
+              </paused>
+              <frozen>
+                .Set
+              </frozen>
+            </token-setting>
+          </token-settings>))
+            =>
+        doneLemma(true)
+        ...
+    </meta-steps>
+
 
     claim <meta-steps> runLemma( isEmpty(.TxList) ) => doneLemma(true) ... </meta-steps>
     claim <meta-steps> runLemma( isEmpty(TxL(#nullTx)) ) => doneLemma(false) ... </meta-steps>
