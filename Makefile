@@ -3,7 +3,9 @@
 		build verification \
 		clean
 
-esdt-sources := esdt.md esdt-syntax.md containers.md errors.md
+esdt-sources := esdt.md esdt-syntax.md \
+				configuration.md containers.md errors.md \
+				helpers.md transfer.md  
 
 all: build
 
