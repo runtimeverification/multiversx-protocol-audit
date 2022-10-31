@@ -163,7 +163,9 @@ Restore to snapshot
   // ------------------------------------------------------------------------------------
      rule #mkReturnTx(transfer(Sender, Dest, TokId, Val, _)) => transfer(Dest, Sender, TokId, Val, true)
      rule #mkReturnTx(#nullTx) => #nullTx
-     rule #mkReturnTx(_:ESDTManage) => #nullTx
+     rule #mkReturnTx(_:ESDTManage)    => #nullTx
+     rule #mkReturnTx(doFreeze(_,_,_)) => #nullTx
+     rule #mkReturnTx(doPause(_,_,_))  => #nullTx
      
 ```
 

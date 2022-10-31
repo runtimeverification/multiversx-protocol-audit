@@ -38,9 +38,12 @@ module HELPERS
     // builtin functions
     rule #txSenderShard(transfer(ACT, _, _, _, _)) => accountShard(ACT)    
     rule #txSenderShard(doFreeze(_, _, _))        => #metachainShardId    
+    rule #txSenderShard(doPause(_, _, _))         => #metachainShardId    
     // esdt SC calls
     rule #txSenderShard(issue(ACT, _, _) _)        => accountShard(ACT)    
     rule #txSenderShard(freeze(ACT, _, _, _))      => accountShard(ACT)
+    rule #txSenderShard(pause(ACT, _, _))          => accountShard(ACT)
+    rule #txSenderShard(controlChanges(ACT, _) _)  => accountShard(ACT)
     //
     rule #txSenderShard(#nullTx)                   => #metachainShardId
 

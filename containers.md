@@ -142,7 +142,6 @@ module TOKENPROPS
     rule #getproperty(M, A) => M [ A ] orDefault false
 
     syntax PropMap ::= "#makeProperties" "(" Properties ")" [function, functional]
-                     | "#makePropertiesH" "(" PropMap "," PropertyList ")" [function, functional]
     rule #makeProperties( )      => #defaultTokenProps
     rule #makeProperties({ Ps }) => #updatePropsH(#defaultTokenProps, Ps)
     
