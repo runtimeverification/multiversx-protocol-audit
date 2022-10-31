@@ -1,6 +1,6 @@
 
-.PHONY: test test-all test-prove \
-		build verification \
+.PHONY: test test-all test-prove test-concrete \
+		build verification tester \
 		clean
 
 esdt-sources := esdt.md esdt-syntax.md \
@@ -31,12 +31,28 @@ spec_files := 	tests/specs/functional-spec.k      	 \
 	            tests/specs/pause-spec.k      	 \
 	            tests/specs/upgrade-freeze-spec.k      	 \
 
-test: test-prove
+test: test-prove test-concrete
 
 test-prove:	$(spec_files:=.prove)
 
 tests/specs/%.prove: verification-kompiled/timestamp 
 	kprove tests/specs/$* --definition verification-kompiled
+
+concrete_test_files :=	$(wildcard tests/concrete/*.in.k)
+
+test-concrete: $(concrete_test_files:=.run)
+
+tester: tester-kompiled/timestamp
+
+tester-kompiled/timestamp: ${esdt-sources} tests/concrete/tester.k 
+	kompile tests/concrete/tester.k --backend haskell
+
+tests/concrete/%.in.k.run: tester-kompiled/timestamp
+	krun --definition tester-kompiled \
+	     tests/concrete/$*.in.k \
+		 > tests/concrete/$*.out.actual
+	diff tests/concrete/$*.out.k tests/concrete/$*.out.actual
+	rm tests/concrete/$*.out.actual
 
 clean:
 	rm -r .kprove* \

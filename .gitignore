@@ -4,6 +4,8 @@
 
 esdt-kompiled
 verification-kompiled
+tester-kompiled
+kore-exec.tar.gz
 
 .sessionCommands
 .kore-repl-history
