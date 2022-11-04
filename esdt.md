@@ -265,7 +265,7 @@ At Metachain, check the ownership and token properties. Then, call the builtin f
             ...
           </global-token-settings>
           <meta-out-txs> ... (.TxList => TxL( doFreeze(TokId, OtherAct, Val) ) ) </meta-out-txs>
-          requires Props [canFreeze]
+          requires hasProp(Props, canFreeze)
           [label(freeze-at-meta)]
 ```
 
@@ -329,11 +329,12 @@ At Metachain, check the ownership and token properties. Then, call the builtin f
               <global-token-id> TokId </global-token-id>
               <global-token-owner> Caller </global-token-owner>
               <global-token-props> Props </global-token-props>
+              <global-token-paused> _ => Val </global-token-paused>
               ...
             </global-token-setting>
             ...
           </global-token-settings>
-          requires Props [canPause]
+          requires hasProp(Props, canPause)
           [label(pause-at-meta)]
 
      syntax KItem ::= pauseShards(TokenId, Bool, Set)
@@ -402,7 +403,7 @@ At the destination shard, pause the token.
             </global-token-setting>
             ...
           </global-token-settings>
-          requires TokProps [ canUpgrade ]
+          requires hasProp(TokProps, canUpgrade)
           [label(controlChanges-at-meta)]
 ```
 

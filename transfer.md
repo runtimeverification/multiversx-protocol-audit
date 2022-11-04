@@ -299,8 +299,8 @@ Check Frozen
 
   // TODO complete #mustVerifyPayable definition
   syntax Bool ::= "#mustVerifyPayable" "(" ESDTTransfer ")"   [function, functional]
-  rule #mustVerifyPayable(transfer(_, _, _, _, true)) => false
-  rule #mustVerifyPayable(_)                          => true    [owise]
+  rule #mustVerifyPayable(transfer(_, _, _, _, true))  => false
+  rule #mustVerifyPayable(transfer(_, _, _, _, false)) => true
   
   // TODO complete #isPayable definition
   syntax Bool ::= "#isPayable"  "(" ESDTTransfer ")"          [function, functional]

@@ -12,7 +12,7 @@ all: build
 build: esdt-kompiled/timestamp 
 
 esdt-kompiled/timestamp: ${esdt-sources}
-	kompile esdt.md --backend haskell
+	kompile esdt.md --backend llvm
 
 verification: verification-kompiled/timestamp
 
@@ -45,11 +45,11 @@ test-concrete: $(concrete_test_files:=.run)
 tester: tester-kompiled/timestamp
 
 tester-kompiled/timestamp: ${esdt-sources} tests/concrete/tester.k 
-	kompile tests/concrete/tester.k --backend haskell
+	kompile tests/concrete/tester.k --backend llvm
 
 tests/concrete/%.in.k.run: tester-kompiled/timestamp
 	krun --definition tester-kompiled \
-	     tests/concrete/$*.in.k \
+		 tests/concrete/$*.in.k \
 		 > tests/concrete/$*.out.actual
 	diff tests/concrete/$*.out.k tests/concrete/$*.out.actual
 	rm tests/concrete/$*.out.actual
@@ -57,5 +57,7 @@ tests/concrete/%.in.k.run: tester-kompiled/timestamp
 clean:
 	rm -r .kprove* \
 	      .krun* \
+		  .kompile* \
 	      esdt-kompiled \
-		  verification-kompiled
+	      verification-kompiled \
+		  tester-kompiled

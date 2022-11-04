@@ -60,7 +60,7 @@ module UPGRADE-FREEZE-SPEC
         </shard>
       </shards>
       requires #metachainShardId =/=Shard Shr1
-       andBool Ps[canUpgrade]
+       andBool hasProp(Ps, canUpgrade)
       ensures A2 in ?Frozen
 
     

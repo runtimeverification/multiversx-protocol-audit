@@ -25,6 +25,7 @@ module MULTIQUEUE
 
 
     syntax MQueue [hook(MAP.Map)]
+    syntax TList ::= TxList
 
     syntax MQueue ::= MQueue MQueue
         [ left, function, hook(MAP.concat), klabel(_MQueue_), symbol, assoc, comm
@@ -35,7 +36,7 @@ module MULTIQUEUE
         [ function, functional, hook(MAP.unit), klabel(.MQueue), symbol
         , latex(\dotCt{MQueue})
         ]
-    syntax MQueue ::= ShardId "M|->" TxList
+    syntax MQueue ::= ShardId "M|->" TList
         [ function, functional, hook(MAP.element), klabel(_M|->_), symbol
         , latex({#1}\mapsto{#2})
         ]
@@ -43,11 +44,11 @@ module MULTIQUEUE
     syntax priorities _M|->_ > _MQueue_ .MQueue
     syntax non-assoc _M|->_
 
-    syntax TxList ::= MQueue "[" ShardId "]"                              [function, hook(MAP.lookup), klabel(MQueue:lookup), symbol]
+    syntax TList ::= MQueue "[" ShardId "]"                              [function, hook(MAP.lookup), klabel(MQueue:lookup), symbol]
     
-    syntax TxList ::= MQueue "[" ShardId "]" "orDefault" TxList           [function, functional, hook(MAP.lookupOrDefault), klabel(MQueue:lookupOrDefault)]
+    syntax TList ::= MQueue "[" ShardId "]" "orDefault" TList           [function, functional, hook(MAP.lookupOrDefault), klabel(MQueue:lookupOrDefault)]
     
-    syntax MQueue ::= MQueue "[" key: ShardId "<-" value: TxList "]"      [function, functional, klabel(MQueue:update), symbol, hook(MAP.update), prefer]
+    syntax MQueue ::= MQueue "[" key: ShardId "<-" value: TList "]"      [function, functional, klabel(MQueue:update), symbol, hook(MAP.update), prefer]
     
     syntax Set ::= keys(MQueue)                                                 [function, functional, hook(MAP.keys)]
     syntax List ::= "keys_list" "(" MQueue ")"                                  [function, hook(MAP.keys_list)]
@@ -55,14 +56,14 @@ module MULTIQUEUE
 
 
     syntax MQueue ::= push(MQueue, ShardId, Transaction)                        [function, functional]
-    rule push(MQ, Shr, Tx)    => MQ (Shr M|-> TxL(Tx)) requires notBool( Shr in_keys(MQ)) 
-    rule push(MQ, Shr, Tx)    => MQ [Shr <- (MQ[Shr]) TxL(Tx)  ]   requires Shr in_keys(MQ)             // >
+    rule push(MQ, Shr, Tx)    => MQ (Shr M|-> TxL(Tx) )            requires notBool( Shr in_keys(MQ))   // >
+    rule push(MQ, Shr, Tx)    => MQ [Shr <- {MQ[Shr]}:>TxList TxL(Tx)  ]   requires Shr in_keys(MQ)             // >
 
 
     syntax Bool ::= isEmpty(MQueue)                           [function, functional]
     rule isEmpty(.MQueue)                 => true
-    rule isEmpty((_:ShardId M|-> Txs) MQ) => isEmpty(MQ) requires isEmpty(Txs)
-    rule isEmpty((_:ShardId M|-> Txs) _)  => false       requires notBool( isEmpty(Txs) )
+    rule isEmpty((_:ShardId M|-> Txs ) MQ) => isEmpty(MQ) requires isEmpty(Txs)
+    rule isEmpty((_:ShardId M|-> Txs ) _)  => false       requires notBool( isEmpty(Txs) )
 
 endmodule
 
@@ -73,6 +74,7 @@ module BALANCEMAP
     imports INT
 
     syntax BalMap [hook(MAP.Map)]
+    syntax Integer ::= Int
 
     syntax BalMap ::= BalMap BalMap
         [ left, function, hook(MAP.concat), klabel(_BalMap_), symbol, assoc, comm
@@ -83,7 +85,7 @@ module BALANCEMAP
         [ function, functional, hook(MAP.unit), klabel(.BalMap), symbol
         , latex(\dotCt{BalMap})
         ]
-    syntax BalMap ::= TokenId "B|->" Int
+    syntax BalMap ::= TokenId "B|->" Integer
         [ function, functional, hook(MAP.element), klabel(_B|->_), symbol
         , latex({#1}\mapsto{#2})
         ]
@@ -91,11 +93,11 @@ module BALANCEMAP
     syntax priorities _B|->_ > _BalMap_ .BalMap
     syntax non-assoc _B|->_
 
-    syntax Int ::= BalMap "[" TokenId "]"                              [function, hook(MAP.lookup), klabel(BalMap:lookup), symbol]
+    syntax Integer ::= BalMap "[" TokenId "]"                              [function, hook(MAP.lookup), klabel(BalMap:lookup), symbol]
     
-    syntax Int ::= BalMap "[" TokenId "]" "orDefault" Int              [function, functional, hook(MAP.lookupOrDefault), klabel(BalMap:lookupOrDefault)]
+    syntax Integer ::= BalMap "[" TokenId "]" "orDefault" Integer              [function, functional, hook(MAP.lookupOrDefault), klabel(BalMap:lookupOrDefault)]
     
-    syntax BalMap ::= BalMap "[" key: TokenId "<-" value: Int "]"      [function, functional, klabel(BalMap:update), symbol, hook(MAP.update), prefer]
+    syntax BalMap ::= BalMap "[" key: TokenId "<-" value: Integer "]"      [function, functional, klabel(BalMap:update), symbol, hook(MAP.update), prefer]
     
     syntax Bool ::= TokenId "in_keys" "(" BalMap ")"                            [function, functional, hook(MAP.in_keys)]
 
@@ -103,13 +105,15 @@ module BALANCEMAP
     rule #addToBalance(Bs, TokId, Val) => Bs [TokId <- #getBalance(Bs, TokId) +Int Val] 
     
     syntax Int ::= #getBalance(BalMap, TokenId)    [function, functional]
-    rule #getBalance(M, A) => M [ A ] orDefault 0
+    rule #getBalance(M, A) => {M [ A ] orDefault 0}:>Int
 
 endmodule
 
 module TOKENPROPS
     imports ESDT-SYNTAX
     imports BOOL
+
+    syntax Boolean ::= Bool
 
     syntax PropMap [hook(MAP.Map)]
 
@@ -122,7 +126,7 @@ module TOKENPROPS
         [ function, functional, hook(MAP.unit), klabel(.PropMap), symbol
         , latex(\dotCt{PropMap})
         ]
-    syntax PropMap ::= PropertyName "P|->" Bool
+    syntax PropMap ::= PropertyName "P|->" Boolean
         [ function, functional, hook(MAP.element), klabel(_P|->_), symbol
         , latex({#1}\mapsto{#2})
         ]
@@ -130,16 +134,16 @@ module TOKENPROPS
     syntax priorities _P|->_ > _PropMap_ .PropMap
     syntax non-assoc _P|->_
 
-    syntax Bool ::= PropMap "[" PropertyName "]"                              [function, hook(MAP.lookup), klabel(PropMap:lookup), symbol]
+    syntax Boolean ::= PropMap "[" PropertyName "]"                              [function, hook(MAP.lookup), klabel(PropMap:lookup), symbol]
     
-    syntax Bool ::= PropMap "[" PropertyName "]" "orDefault" Bool              [function, functional, hook(MAP.lookupOrDefault), klabel(PropMap:lookupOrDefault)]
+    syntax Boolean ::= PropMap "[" PropertyName "]" "orDefault" Boolean              [function, functional, hook(MAP.lookupOrDefault), klabel(PropMap:lookupOrDefault)]
     
-    syntax PropMap ::= PropMap "[" key: PropertyName "<-" value: Bool "]"     [function, functional, klabel(PropMap:update), symbol, hook(MAP.update), prefer]
+    syntax PropMap ::= PropMap "[" key: PropertyName "<-" value: Boolean "]"     [function, functional, klabel(PropMap:update), symbol, hook(MAP.update), prefer]
     
     syntax Bool ::= PropertyName "in_keys" "(" PropMap ")"                                  [function, functional, hook(MAP.in_keys)]
 
-    syntax Bool ::= #getproperty(PropMap, PropertyName)    [function, functional]
-    rule #getproperty(M, A) => M [ A ] orDefault false
+    syntax Bool ::= hasProp(PropMap, PropertyName)    [function, functional]
+    rule hasProp(M, A) => {M [ A ] orDefault false}:>Bool
 
     syntax PropMap ::= "#makeProperties" "(" Properties ")" [function, functional]
     rule #makeProperties( )      => #defaultTokenProps

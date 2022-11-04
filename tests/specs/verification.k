@@ -26,11 +26,14 @@ module VERIFICATION
     
     rule M:BalMap [ X ] orDefault Y => Y                             requires notBool(X in_keys(M))         [simplification]
 
-    rule (P1:PropMap P2:PropMap) [A] => true requires P1[A] andBool P2[A] [simplification]
 
     rule (P1:PropMap P2:PropMap) P2[A] => true requires notBool(A in_keys(P1)) [simplification]
 
     rule (P1:PropMap (A P|-> B)) [A] => B requires notBool(A in_keys(P1))  [simplification]
+
+    rule P1:PropMap (X P|-> B:Bool) [X] orDefault false => B requires notBool(X in_keys(P1))                [simplification]
+    
+    rule (_MAP:PropMap [ K  <-  V1 ]) [ K ] orDefault _ => V1                                               [simplification]
 
     rule A +Int (0 -Int B) => A -Int B                                                                      [simplification]
     

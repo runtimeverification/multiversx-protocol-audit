@@ -1,12 +1,103 @@
-<generatedTop>
-  <k>
-    #loaded ~> .
-  </k>
-  .ConfCell
-  <out-bals>
-    accountAddr ( 1 , "A1" ) |-> 1 B|-> 100
-    2 B|-> 100
-    accountAddr ( 1 , "A2" ) |-> 1 B|-> 10
-    2 B|-> 20
-  </out-bals>
-</generatedTop>
+<conf>
+  <esdt>
+    <is-running>
+      false
+    </is-running>
+    <meta>
+      <meta-steps>
+        .
+      </meta-steps>
+      <meta-incoming>
+        .MQueue
+      </meta-incoming>
+      <meta-out-txs>
+        .TxList
+      </meta-out-txs>
+      <global-token-settings>
+        .GlobalTokenSettingCellMap
+      </global-token-settings>
+    </meta>
+    <shards>
+      <shard>
+        <shard-id>
+          1
+        </shard-id>
+        <incoming-txs>
+          .MQueue
+        </incoming-txs>
+        <user-txs>
+          .TxList
+        </user-txs>
+        <steps>
+          .
+        </steps>
+        <current-tx>
+          #nullTx
+        </current-tx>
+        <out-txs>
+          .TxList
+        </out-txs>
+        <accounts>
+          <account>
+            <account-name>
+              "A1"
+            </account-name>
+            <is-sc>
+              false
+            </is-sc>
+            <esdt-balances>
+              1 B|-> 100
+              2 B|-> 100
+            </esdt-balances>
+          </account> <account>
+            <account-name>
+              "A2"
+            </account-name>
+            <is-sc>
+              false
+            </is-sc>
+            <esdt-balances>
+              1 B|-> 10
+              2 B|-> 20
+            </esdt-balances>
+          </account>
+        </accounts>
+        <snapshot>
+          #emptySnapshot
+        </snapshot>
+        <token-settings>
+          <token-setting>
+            <token-setting-id>
+              1
+            </token-setting-id>
+            <limited>
+              false
+            </limited>
+            <paused>
+              false
+            </paused>
+            <frozen>
+              .Set
+            </frozen>
+          </token-setting> <token-setting>
+            <token-setting-id>
+              2
+            </token-setting-id>
+            <limited>
+              false
+            </limited>
+            <paused>
+              false
+            </paused>
+            <frozen>
+              .Set
+            </frozen>
+          </token-setting>
+        </token-settings>
+        <logs>
+          .Logs
+        </logs>
+      </shard>
+    </shards>
+  </esdt>
+</conf>

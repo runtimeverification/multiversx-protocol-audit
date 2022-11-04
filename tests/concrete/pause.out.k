@@ -8,13 +8,31 @@
         .
       </meta-steps>
       <meta-incoming>
-        .MQueue
+        1 M|-> .TxList
       </meta-incoming>
       <meta-out-txs>
         .TxList
       </meta-out-txs>
       <global-token-settings>
-        .GlobalTokenSettingCellMap
+        <global-token-setting>
+          <global-token-id>
+            1
+          </global-token-id>
+          <global-token-paused>
+            true
+          </global-token-paused>
+          <global-token-owner>
+            accountAddr ( 1 , "A1" )
+          </global-token-owner>
+          <global-token-props>
+            canAddSpecialRoles P|-> true
+            canChangeOwner P|-> false
+            canFreeze P|-> false
+            canPause P|-> true
+            canUpgrade P|-> true
+            canWipe P|-> false
+          </global-token-props>
+        </global-token-setting>
       </global-token-settings>
     </meta>
     <shards>
@@ -23,7 +41,7 @@
           1
         </shard-id>
         <incoming-txs>
-          .MQueue
+          #metachainShardId M|-> .TxList
         </incoming-txs>
         <user-txs>
           .TxList
@@ -46,8 +64,7 @@
               false
             </is-sc>
             <esdt-balances>
-              1 B|-> 90
-              2 B|-> 100
+              .BalMap
             </esdt-balances>
           </account>
         </accounts>
@@ -63,20 +80,7 @@
               false
             </limited>
             <paused>
-              false
-            </paused>
-            <frozen>
-              .Set
-            </frozen>
-          </token-setting> <token-setting>
-            <token-setting-id>
-              2
-            </token-setting-id>
-            <limited>
-              false
-            </limited>
-            <paused>
-              false
+              true
             </paused>
             <frozen>
               .Set
@@ -91,7 +95,7 @@
           2
         </shard-id>
         <incoming-txs>
-          1 M|-> .TxList
+          #metachainShardId M|-> .TxList
         </incoming-txs>
         <user-txs>
           .TxList
@@ -106,18 +110,7 @@
           .TxList
         </out-txs>
         <accounts>
-          <account>
-            <account-name>
-              "A2"
-            </account-name>
-            <is-sc>
-              false
-            </is-sc>
-            <esdt-balances>
-              1 B|-> 20
-              2 B|-> 20
-            </esdt-balances>
-          </account>
+          .AccountCellMap
         </accounts>
         <snapshot>
           #emptySnapshot
@@ -131,20 +124,7 @@
               false
             </limited>
             <paused>
-              false
-            </paused>
-            <frozen>
-              .Set
-            </frozen>
-          </token-setting> <token-setting>
-            <token-setting-id>
-              2
-            </token-setting-id>
-            <limited>
-              false
-            </limited>
-            <paused>
-              false
+              true
             </paused>
             <frozen>
               .Set

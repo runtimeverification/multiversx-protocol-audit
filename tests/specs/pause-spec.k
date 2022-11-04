@@ -14,6 +14,7 @@ module PAUSE-SPEC
           <global-token-settings> 
             <global-token-setting>
               <global-token-id> TokId </global-token-id>
+              <global-token-paused> _ => true </global-token-paused>
               <global-token-owner> accountAddr(Shr1, A1) </global-token-owner>
               <global-token-props> ... canPause P|-> true ... </global-token-props>
               ...
