@@ -7,7 +7,7 @@ module CROSS-DEST-FAIL-SPEC
     imports VERIFICATION
 
     // simple cross shard successful  
-    claim <is-running> false => true </is-running>
+    claim <is-running> #no => ShrId2 </is-running>
           <meta-steps> . </meta-steps>
           <meta-incoming> .MQueue </meta-incoming>
           <meta-out-txs> .TxList </meta-out-txs>

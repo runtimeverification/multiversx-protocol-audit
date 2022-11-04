@@ -34,8 +34,9 @@ Execute one of these steps:
 ### Execute a user action
 
 ```k
-     rule <is-running> false => true </is-running>
+     rule <is-running> #no => ShrId </is-running>
           <shard>
+            <shard-id> ShrId </shard-id>
             <steps> . </steps>
             <user-txs> (TxL(Tx) => .TxList) ... </user-txs>
             <current-tx> #nullTx => Tx </current-tx>
@@ -46,8 +47,9 @@ Execute one of these steps:
 ### Execute an incoming transaction
 
 ```k
-     rule <is-running> false => true </is-running>
+     rule <is-running> #no => ShrId </is-running>
           <shard>
+            <shard-id> ShrId </shard-id>
             <steps> . </steps>
             <incoming-txs> 
                  ...
@@ -113,8 +115,9 @@ Send messages to Metachain:
 Cleanup when there is no outgoing transaction.
 
 ```k
-     rule <is-running> true => false </is-running>
+     rule <is-running> ShrId => #no </is-running>
           <shard> 
+            <shard-id> ShrId </shard-id>
             <steps> #finalizeTransaction => . </steps>
             <current-tx> _ => #nullTx </current-tx>
             <snapshot> _ => #emptySnapshot </snapshot>
@@ -193,7 +196,7 @@ Send ESDT management operations to the system SC on Metachain
             ... 
           </meta-incoming>
           <meta-steps> . => Tx </meta-steps>
-          <is-running> false => true </is-running>
+          <is-running> #no => #metachainShardId </is-running>
           [label(meta-take-incoming-tx)]
 ```
 
@@ -423,7 +426,7 @@ At the destination shard, pause the token.
 
      rule <meta-steps> #finalizeTransaction => . </meta-steps>
           <meta-out-txs> .TxList </meta-out-txs>
-          <is-running> true => false </is-running>
+          <is-running> #metachainShardId => #no </is-running>
 ```
 
 

@@ -6,7 +6,7 @@ requires "domains.md"
 module CROSS-RETURN-SPEC
     imports VERIFICATION
 
-    claim <is-running> false </is-running>
+    claim <is-running> #no </is-running>
           <meta-steps> . </meta-steps>
           <meta-incoming> .MQueue </meta-incoming>
           <meta-out-txs> .TxList </meta-out-txs>

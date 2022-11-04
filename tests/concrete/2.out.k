@@ -1,7 +1,7 @@
 <conf>
   <esdt>
     <is-running>
-      false
+      #no
     </is-running>
     <meta>
       <meta-steps>

@@ -7,7 +7,7 @@ module CROSS-SPEC
     imports VERIFICATION
 
     // simple cross shard successful  
-    claim <is-running> false </is-running>
+    claim <is-running> #no </is-running>
           <meta-steps> . </meta-steps>
           <meta-incoming> .MQueue </meta-incoming>
           <meta-out-txs> .TxList </meta-out-txs>

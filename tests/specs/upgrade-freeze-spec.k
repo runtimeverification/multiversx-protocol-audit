@@ -7,7 +7,7 @@ requires "domains.md"
 module UPGRADE-FREEZE-SPEC
     imports VERIFICATION
 
-    claim <is-running> false </is-running>
+    claim <is-running> #no </is-running>
           <meta-steps> . </meta-steps>
           <meta-incoming> .MQueue => (Shr1 M|-> .TxList) </meta-incoming>
           <meta-out-txs> .TxList </meta-out-txs>

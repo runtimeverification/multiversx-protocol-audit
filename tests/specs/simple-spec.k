@@ -7,7 +7,7 @@ module SIMPLE-SPEC
     imports VERIFICATION
 
 // simple single shard successful
-    claim <is-running> false </is-running>
+    claim <is-running> #no </is-running>
           <meta-steps> . </meta-steps>
           <meta-incoming> .MQueue </meta-incoming>
           <meta-out-txs> .TxList </meta-out-txs>
@@ -67,7 +67,7 @@ module SIMPLE-SPEC
        andBool 0 <=Int BAL2
 
 // simple single shard destination is frozen
-    claim <is-running> false </is-running>
+    claim <is-running> #no </is-running>
           <meta-steps> . </meta-steps>
           <meta-incoming> .MQueue </meta-incoming>
           <meta-out-txs> .TxList </meta-out-txs>

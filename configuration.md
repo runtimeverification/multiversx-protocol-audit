@@ -11,7 +11,7 @@ module CONFIGURATION
 
     configuration
       <esdt>
-        <is-running> false </is-running>
+        <is-running> #no:Running </is-running>
         <meta>
           <meta-steps> .K </meta-steps>
           <meta-incoming> .MQueue </meta-incoming>
@@ -59,6 +59,9 @@ module CONFIGURATION
           </shard>
         </shards>
       </esdt>
+
+    syntax Running ::= "#no"
+                     | ShardId
 
     syntax Transaction ::= "#nullTx"
 

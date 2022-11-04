@@ -1,5 +1,5 @@
 <esdt>
-  <is-running> false </is-running>
+  <is-running> #no </is-running>
   <meta>
     <meta-steps>
       #emptyK
