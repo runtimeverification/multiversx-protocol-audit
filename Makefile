@@ -3,6 +3,8 @@
 		build verification tester \
 		clean
 
+PROFILE :=
+
 esdt-sources := esdt.md esdt-syntax.md \
 				configuration.md containers.md errors.md \
 				helpers.md transfer.md  
@@ -36,7 +38,7 @@ test: test-prove test-concrete
 test-prove:	$(spec_files:=.prove)
 
 tests/specs/%.prove: verification-kompiled/timestamp 
-	kprove tests/specs/$* --definition verification-kompiled
+	$(PROFILE) kprove  tests/specs/$* --definition verification-kompiled
 
 concrete_test_files :=	$(wildcard tests/concrete/*.in.k)
 
