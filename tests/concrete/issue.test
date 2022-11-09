@@ -1,0 +1,13 @@
+addShard(1)
+addAccount(1, "A1", false)
+addUserTx(1, 
+    issue( accountAddr(1, "A1"), 1, 100 )
+)
+#wait
+
+assert("A1's 1 balance", 
+       100 == getBalance(accountAddr(1, "A1"), 1))
+assert("Frozen 1 is empty",
+       .Set == getFrozen(1, 1))
+assert("1 Not paused",
+       false == isPaused(1, 1))

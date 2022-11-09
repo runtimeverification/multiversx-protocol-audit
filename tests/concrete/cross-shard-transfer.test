@@ -1,0 +1,39 @@
+addShard(1)
+addShard(2)
+addAccount(1, "A1", false)
+addAccount(2, "A2", false)
+setBalance(accountAddr(1, "A1"), 1, 100)
+setBalance(accountAddr(1, "A1"), 2, 120)
+setBalance(accountAddr(2, "A2"), 1, 10)
+addUserTx(1, 
+    transfer(
+        accountAddr(1, "A1"),
+        accountAddr(2, "A2"),
+        1, 10, false
+    )
+)
+addUserTx(2, 
+    transfer(
+        accountAddr(2, "A2"),
+        accountAddr(1, "A1"),
+        1, 10, false
+    )
+)
+addUserTx(1, 
+    transfer(
+        accountAddr(1, "A1"),
+        accountAddr(2, "A2"),
+        2, 20, false
+    )
+)
+#wait
+
+assert("A1's 1 balance", 
+       100 == getBalance(accountAddr(1, "A1"), 1))
+assert("A1's 2 balance", 
+       100 == getBalance(accountAddr(1, "A1"), 2))
+
+assert("A2's 1 balance", 
+       10 == getBalance(accountAddr(2, "A2"), 1))
+assert("A2's 2 balance", 
+       20 == getBalance(accountAddr(2, "A2"), 2))

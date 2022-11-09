@@ -1,0 +1,26 @@
+addShard(1)
+addShard(2)
+addShard(3)
+addShard(4)
+addShard(5)
+addShard(6)
+addAccount(1, "A1", false)
+
+addUserTx(1, 
+    issue( accountAddr(1, "A1"), 1, 100 ) { canPause: true }
+)
+#wait
+
+addUserTx(1, 
+    pause(accountAddr(1 , "A1" ), 1, true)
+)
+
+#wait
+
+assert("Paused 1", true == isPaused(1, 1))
+assert("Paused 2", true == isPaused(2, 1))
+assert("Paused 3", true == isPaused(3, 1))
+assert("Paused 4", true == isPaused(4, 1))
+assert("Paused 5", true == isPaused(5, 1))
+assert("Paused 6", true == isPaused(6, 1))
+
