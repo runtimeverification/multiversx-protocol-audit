@@ -1,3 +1,9 @@
+/*
+  Cross-shard transaction fails at the destination (receiver account is frozen).
+  The sender gets a refund.
+*/
+
+
 requires "../../esdt.md"
 requires "verification.k"
 

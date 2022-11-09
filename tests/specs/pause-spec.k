@@ -51,7 +51,7 @@ module PAUSE-SPEC
           <logs> L => (L ; // send builtin call to metachain
                        #success ; Tx ;
                         // execute the builtin call from metachain
-                       #success ; doPause(Shr1, TokId, true) )
+                       #success ; setGlobalSetting(Shr1, TokId, paused, true) )
           </logs>
           ...
         </shard>
@@ -83,7 +83,7 @@ module PAUSE-SPEC
           <snapshot> #emptySnapshot </snapshot>
           <logs> L2 => (L2 ;
                         // execute the builtin call from metachain
-                       #success ; doPause(Shr2, TokId, true) )
+                       #success ; setGlobalSetting(Shr2, TokId, paused, true) )
           </logs>
           ...
         </shard>

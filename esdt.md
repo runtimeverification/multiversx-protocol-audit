@@ -168,7 +168,7 @@ Restore to snapshot
      rule #mkReturnTx(#nullTx) => #nullTx
      rule #mkReturnTx(_:ESDTManage)    => #nullTx
      rule #mkReturnTx(doFreeze(_,_,_)) => #nullTx
-     rule #mkReturnTx(doPause(_,_,_))  => #nullTx
+     rule #mkReturnTx(setGlobalSetting(_,_,_,_))  => #nullTx
      
 ```
 
@@ -324,7 +324,7 @@ At Metachain, check the ownership and token properties. Then, call the builtin f
 
 ```k
 
-     rule <meta-steps> pause(Caller, TokId, Val) => pauseShards(TokId, Val, .Set)
+     rule <meta-steps> pause(Caller, TokId, Val) => sendGlobalSettingToAll(TokId, paused, Val, .Set)
                                                  ~> #finalizeTransaction
           </meta-steps> 
           <global-token-settings>
@@ -340,23 +340,24 @@ At Metachain, check the ownership and token properties. Then, call the builtin f
           requires hasProp(Props, canPause)
           [label(pause-at-meta)]
 
-     syntax KItem ::= pauseShards(TokenId, Bool, Set)
+     syntax KItem ::= sendGlobalSettingToAll(TokenId, MetadataKey, Bool, Set)
+  // -----------------------------------------------------------
      rule <meta-steps>
-            pauseShards(TokId, Val, Paused)
-            => pauseShards(TokId, Val, Paused SetItem(ShrId) ) ... 
+            sendGlobalSettingToAll(TokId, Key, Val, Sent)
+            => sendGlobalSettingToAll(TokId, Key, Val, Sent SetItem(ShrId) ) ... 
           </meta-steps>
           <meta-out-txs> 
-            ... (.TxList => TxL( doPause(ShrId, TokId, Val)) )  
+            ... (.TxList => TxL( setGlobalSetting(ShrId, TokId, Key, Val)) )  
           </meta-out-txs>
           <shard>
             <shard-id> ShrId </shard-id>
             ...
           </shard>
-          requires notBool (ShrId in(Paused))
-          [label(pauseShards-rec)]
+          requires notBool (ShrId in(Sent))
+          [label(sendGlobalSettingToAll-rec)]
 
-     rule <meta-steps> pauseShards(_, _, _) => . ... </meta-steps>
-          [priority(160), label(pauseShards-nil)] // has lower priority than the above and higher than owise
+     rule <meta-steps> sendGlobalSettingToAll(_, _, _, _) => . ... </meta-steps>
+          [priority(160), label(sendGlobalSettingToAll-end)] // has lower priority than the above and higher than owise
 
 ```
 
@@ -366,18 +367,18 @@ At the destination shard, pause the token.
      rule <shard>
             <steps> 
               . => #createDefaultTokenSettings(TokId)
-                ~> #updatePause
+                ~> #updateMetadata
                 ~> #success
                 ~> #finalizeTransaction
             </steps>
-            <current-tx> doPause(_, TokId, _) </current-tx>
+            <current-tx> setGlobalSetting(_, TokId, _, _) </current-tx>
             ...
           </shard>  [label(pause-at-shard)]
 
-     syntax TxStep ::= "#updatePause"
+     syntax TxStep ::= "#updateMetadata"
      rule <shard>
-            <steps> #updatePause => . ... </steps>
-            <current-tx> doPause(_, TokId, Val) </current-tx>
+            <steps> #updateMetadata => . ... </steps>
+            <current-tx> setGlobalSetting(_, TokId, paused, Val) </current-tx>
             <token-settings>
               <token-setting>
                 <token-setting-id> TokId </token-setting-id>
@@ -388,6 +389,20 @@ At the destination shard, pause the token.
             </token-settings>
             ...
           </shard>  [label(update-pause)]
+
+     rule <shard>
+            <steps> #updateMetadata => . ... </steps>
+            <current-tx> setGlobalSetting(_, TokId, limited, Val) </current-tx>
+            <token-settings>
+              <token-setting>
+                <token-setting-id> TokId </token-setting-id>
+                <limited> _ => Val </limited>
+                ...
+              </token-setting>
+              ...
+            </token-settings>
+            ...
+          </shard>  [label(update-limited)]
 ```
 
 

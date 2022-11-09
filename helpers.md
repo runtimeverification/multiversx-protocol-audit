@@ -29,7 +29,7 @@ module HELPERS
     // builtin functions
     rule #txDestShard(transfer(_, ACT, _, _, _))   => accountShard(ACT)
     rule #txDestShard(doFreeze(_, ACT, _))        => accountShard(ACT)
-    rule #txDestShard(doPause(ShrId, _, _))       => ShrId
+    rule #txDestShard(setGlobalSetting(ShrId, _, _, _))       => ShrId
     // esdt SC calls
     rule #txDestShard(_:ESDTManage)                => #metachainShardId    
     //
@@ -37,8 +37,8 @@ module HELPERS
 
     // builtin functions
     rule #txSenderShard(transfer(ACT, _, _, _, _)) => accountShard(ACT)    
-    rule #txSenderShard(doFreeze(_, _, _))        => #metachainShardId    
-    rule #txSenderShard(doPause(_, _, _))         => #metachainShardId    
+    rule #txSenderShard(doFreeze(_, _, _))         => #metachainShardId    
+    rule #txSenderShard(setGlobalSetting(_, _, _, _))   => #metachainShardId    
     // esdt SC calls
     rule #txSenderShard(issue(ACT, _, _) _)        => accountShard(ACT)    
     rule #txSenderShard(freeze(ACT, _, _, _))      => accountShard(ACT)

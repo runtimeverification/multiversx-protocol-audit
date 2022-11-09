@@ -34,7 +34,11 @@ module ESDT-SYNTAX
 
     syntax BuiltinCall ::= ESDTTransfer
                          | "doFreeze" "(" TokenId "," AccountAddr "," Bool ")"
-                         | "doPause" "(" ShardId "," TokenId "," Bool ")"
+                         | "setGlobalSetting" "(" ShardId "," TokenId "," MetadataKey "," Bool ")"
+
+    syntax MetadataKey ::= "paused"
+                         | "limited"
+                         // | "burnRoleForAll"
 
     syntax ESDTTransfer ::= transfer( AccountAddr, AccountAddr, TokenId, Int, Bool )
     
