@@ -117,7 +117,7 @@ module TESTER
 
     
     rule 
-      <k> setBalance(accountAddr(ShrId, ActName), TokId, Val) => . ... </k>
+      <k> setBalance(addr(ShrId, ActName), TokId, Val) => . ... </k>
       <shard>
         <shard-id> ShrId </shard-id>
         <accounts> 
@@ -134,7 +134,7 @@ module TESTER
 
     
     rule 
-      <k> getBalance(accountAddr(ShrId, ActName), TokId) => #getBalance(BALS, TokId) ... </k>
+      <k> getBalance(addr(ShrId, ActName), TokId) => #getBalance(BALS, TokId) ... </k>
       <shard>
         <shard-id> ShrId </shard-id>
         <accounts>

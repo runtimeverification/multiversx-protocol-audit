@@ -14,7 +14,7 @@ module UPGRADE-FREEZE-SPEC
           <global-token-settings> 
             <global-token-setting>
               <global-token-id> TokId </global-token-id>
-              <global-token-owner> accountAddr(Shr1, A1) </global-token-owner>
+              <global-token-owner> addr(Shr1, A1) </global-token-owner>
               <global-token-props> Ps => #updateProps(Ps, {canFreeze: true})  </global-token-props>
               ...
             </global-token-setting>
@@ -28,8 +28,8 @@ module UPGRADE-FREEZE-SPEC
         // ACTIONS
         // --------------------------------------------------------------------------------
           <user-txs> 
-            TxL( (controlChanges(  accountAddr(Shr1, A1), TokId) {canFreeze: true}) #as Tx1)
-            TxL( freeze(  accountAddr(Shr1, A1), accountAddr(Shr1, A2), TokId, true) #as Tx2) 
+            TxL( (controlChanges(  addr(Shr1, A1), TokId) {canFreeze: true}) #as Tx1)
+            TxL( freeze(  addr(Shr1, A1), addr(Shr1, A2), TokId, true) #as Tx2) 
             => .TxList </user-txs>
           <incoming-txs> .MQueue => (#metachainShardId M|-> .TxList) </incoming-txs>
           <current-tx> #nullTx </current-tx>
@@ -54,7 +54,7 @@ module UPGRADE-FREEZE-SPEC
                        #success ; Tx1 ;
                        #success ; Tx2 ;
                         // receive the initial supply
-                       #success ; doFreeze(TokId, accountAddr(Shr1, A2), true) )
+                       #success ; doFreeze(TokId, addr(Shr1, A2), true) )
           </logs>
           ...
         </shard>

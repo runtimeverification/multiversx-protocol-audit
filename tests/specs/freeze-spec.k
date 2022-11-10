@@ -14,7 +14,7 @@ module FREEZE-SPEC
           <global-token-settings> 
             <global-token-setting>
               <global-token-id> TokId </global-token-id>
-              <global-token-owner> accountAddr(Shr1, A1) </global-token-owner>
+              <global-token-owner> addr(Shr1, A1) </global-token-owner>
               <global-token-props> ... canFreeze P|-> true ... </global-token-props>
               ...
             </global-token-setting>
@@ -27,7 +27,7 @@ module FREEZE-SPEC
         
         // ACTIONS
         // --------------------------------------------------------------------------------
-          <user-txs> TxL( freeze(  accountAddr(Shr1, A1), accountAddr(Shr1, A2), TokId, true) #as Tx) => .TxList </user-txs>
+          <user-txs> TxL( freeze(  addr(Shr1, A1), addr(Shr1, A2), TokId, true) #as Tx) => .TxList </user-txs>
           <incoming-txs> .MQueue => (#metachainShardId M|-> .TxList) </incoming-txs>
           <current-tx> #nullTx </current-tx>
           <steps> . </steps>
@@ -50,7 +50,7 @@ module FREEZE-SPEC
           <logs> L => (L ; // send builtin call to metachain
                        #success ; Tx ;
                         // execute the builtin call from metachain
-                       #success ; doFreeze(TokId, accountAddr(Shr1, A2), true) )
+                       #success ; doFreeze(TokId, addr(Shr1, A2), true) )
           </logs>
           ...
         </shard>
@@ -64,7 +64,7 @@ module FREEZE-SPEC
           <global-token-settings> 
             <global-token-setting>
               <global-token-id> TokId </global-token-id>
-              <global-token-owner> accountAddr(Shr1, A1) </global-token-owner>
+              <global-token-owner> addr(Shr1, A1) </global-token-owner>
               <global-token-props> ... canFreeze P|-> true ... </global-token-props>
               ...
             </global-token-setting>
@@ -77,7 +77,7 @@ module FREEZE-SPEC
         
         // ACTIONS
         // --------------------------------------------------------------------------------
-          <user-txs> TxL( freeze(  accountAddr(Shr1, A1), accountAddr(Shr1, A2), TokId, false) #as Tx) => .TxList </user-txs>
+          <user-txs> TxL( freeze(  addr(Shr1, A1), addr(Shr1, A2), TokId, false) #as Tx) => .TxList </user-txs>
           <incoming-txs> .MQueue => (#metachainShardId M|-> .TxList) </incoming-txs>
           <current-tx> #nullTx </current-tx>
           <steps> . </steps>
@@ -100,7 +100,7 @@ module FREEZE-SPEC
           <logs> L => (L ; // send builtin call to metachain
                        #success ; Tx ;
                         // execute the builtin call from metachain
-                       #success ; doFreeze(TokId, accountAddr(Shr1, A2), false) )
+                       #success ; doFreeze(TokId, addr(Shr1, A2), false) )
           </logs>
           ...
         </shard>

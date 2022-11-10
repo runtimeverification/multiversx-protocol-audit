@@ -11,7 +11,7 @@ module ESDT-SYNTAX
     syntax ShardId ::= Int
                      | "#metachainShardId"
     syntax AccountName ::= String
-    syntax AccountAddr ::= accountAddr(accountShard: ShardId, accountName: AccountName )
+    syntax AccountAddr ::= addr(accountShard: ShardId, accountName: AccountName )
 
     syntax TokenId ::= Int
 

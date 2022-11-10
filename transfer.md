@@ -46,7 +46,7 @@ module TRANSFER
   // ---------------------------------------------
      rule <shard> 
             <steps> #basicChecks => #failure(#ErrInvalidRcvAddr) ... </steps>
-            <current-tx> transfer(_, accountAddr(#metachainShardId,_), _, _, _) </current-tx>
+            <current-tx> transfer(_, addr(#metachainShardId,_), _, _, _) </current-tx>
             ...
           </shard> [label(check-dest-is-metachain)] 
      
@@ -91,7 +91,7 @@ Check gas and token settings, then decrease the sender's balance.
                                    ~> #updateBalance(ActName, TokId, 0 -Int Val)
                                    ... 
             </steps>
-            <current-tx> transfer(accountAddr(ShrId, ActName), _, TokId, Val, _) </current-tx>
+            <current-tx> transfer(addr(ShrId, ActName), _, TokId, Val, _) </current-tx>
             ...
           </shard>
           [label(process-sender-at-sender-shard)]
@@ -125,7 +125,7 @@ Perform payable and token settings checks, then, increase the destination accoun
                                  ~> #updateBalance(ActName, TokId, Val)
                                  ... 
             </steps>
-            <current-tx> transfer(_, accountAddr(ShrId, ActName), TokId, Val, _) </current-tx>
+            <current-tx> transfer(_, addr(ShrId, ActName), TokId, Val, _) </current-tx>
             ...
           </shard>
           [label(process-dest-at-dest-shard)]

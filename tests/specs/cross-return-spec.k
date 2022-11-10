@@ -32,7 +32,7 @@ module CROSS-RETURN-SPEC
         
       // ACTIONS
       // --------------------------------------------------------------------------------
-        <user-txs> TxL(transfer(accountAddr(ShrId1, A1), accountAddr(ShrId2, A2), TokId, Val, false) #as Tx) => .TxList </user-txs>
+        <user-txs> TxL(transfer(addr(ShrId1, A1), addr(ShrId2, A2), TokId, Val, false) #as Tx) => .TxList </user-txs>
         <incoming-txs> .MQueue => (ShrId2 M|-> .TxList)  </incoming-txs>
         <steps> . </steps>
         <out-txs> .TxList </out-txs>

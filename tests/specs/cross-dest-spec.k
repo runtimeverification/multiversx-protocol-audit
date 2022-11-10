@@ -29,7 +29,7 @@ module CROSS-DEST-SPEC
       // --------------------------------------------------------------------------------
         <user-txs> .TxList </user-txs>
         <incoming-txs> 
-          (ShrId1 M|-> TxL(transfer(accountAddr(ShrId1, _A1), accountAddr(ShrId2, A2), TokId, Val, false) #as Tx ) )
+          (ShrId1 M|-> TxL(transfer(addr(ShrId1, _A1), addr(ShrId2, A2), TokId, Val, false) #as Tx ) )
             => 
           (ShrId1 M|-> .TxList )
         </incoming-txs>

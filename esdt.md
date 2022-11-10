@@ -289,7 +289,7 @@ At the destination shard, update the set of frozen accounts.
      syntax TxStep ::= "#updateFrozen"
      rule <shard>
             <steps> #updateFrozen => . ... </steps>
-            <current-tx> doFreeze(TokId, accountAddr(_, ActName), true) </current-tx>
+            <current-tx> doFreeze(TokId, addr(_, ActName), true) </current-tx>
             <token-settings>
               <token-setting>
                 <token-setting-id> TokId </token-setting-id>
@@ -304,7 +304,7 @@ At the destination shard, update the set of frozen accounts.
      
      rule <shard>
             <steps> #updateFrozen => . ... </steps>
-            <current-tx> doFreeze(TokId, accountAddr(_, ActName), false) </current-tx>
+            <current-tx> doFreeze(TokId, addr(_, ActName), false) </current-tx>
             <token-settings>
               <token-setting>
                 <token-setting-id> TokId </token-setting-id>

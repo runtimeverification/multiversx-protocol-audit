@@ -4,12 +4,12 @@ addAccount(1, "A1", false)
 addAccount(2, "A2", false)
 
 addUserTx(1, 
-    issue( accountAddr(1, "A1"), 1, 100 ) { canFreeze: true }
+    issue( addr(1, "A1"), 1, 100 ) { canFreeze: true }
 )
 #wait
 
 addUserTx(1, 
-    freeze(accountAddr(1 , "A1" ), accountAddr(2 , "A2" ), 1, true)
+    freeze(addr(1 , "A1" ), addr(2 , "A2" ), 1, true)
 )
 
 #wait

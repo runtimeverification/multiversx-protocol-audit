@@ -33,7 +33,7 @@ module SIMPLE-SPEC
       
       // ACTIONS
       // --------------------------------------------------------------------------------
-        <user-txs> TxL(transfer(accountAddr(ShrId, A1), accountAddr(ShrId, A2), TokId, Val, false) #as Tx) => .TxList </user-txs>
+        <user-txs> TxL(transfer(addr(ShrId, A1), addr(ShrId, A2), TokId, Val, false) #as Tx) => .TxList </user-txs>
         <incoming-txs> .MQueue </incoming-txs>
         <current-tx> #nullTx </current-tx>
         <steps> . </steps>
@@ -93,7 +93,7 @@ module SIMPLE-SPEC
 
       // ACTIONS
       // --------------------------------------------------------------------------------
-        <user-txs> TxL(transfer(accountAddr(ShrId, A1), accountAddr(ShrId, A2), TokId, Val, false) #as Tx) => .TxList </user-txs>
+        <user-txs> TxL(transfer(addr(ShrId, A1), addr(ShrId, A2), TokId, Val, false) #as Tx) => .TxList </user-txs>
         <incoming-txs> .MQueue </incoming-txs>
         <current-tx> #nullTx </current-tx>
         <steps> . </steps>

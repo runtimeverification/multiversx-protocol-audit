@@ -15,7 +15,7 @@ module PAUSE-SPEC
             <global-token-setting>
               <global-token-id> TokId </global-token-id>
               <global-token-paused> _ => true </global-token-paused>
-              <global-token-owner> accountAddr(Shr1, A1) </global-token-owner>
+              <global-token-owner> addr(Shr1, A1) </global-token-owner>
               <global-token-props> ... canPause P|-> true ... </global-token-props>
               ...
             </global-token-setting>
@@ -28,7 +28,7 @@ module PAUSE-SPEC
         
         // ACTIONS
         // --------------------------------------------------------------------------------
-          <user-txs> TxL( pause(  accountAddr(Shr1, A1), TokId, true) #as Tx) => .TxList </user-txs>
+          <user-txs> TxL( pause(  addr(Shr1, A1), TokId, true) #as Tx) => .TxList </user-txs>
           <incoming-txs> .MQueue => (#metachainShardId M|-> .TxList) </incoming-txs>
           <current-tx> #nullTx </current-tx>
           <steps> . </steps>

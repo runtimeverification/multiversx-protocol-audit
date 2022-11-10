@@ -12,7 +12,7 @@ module ISSUE-SPEC
           <meta-incoming> .MQueue => (Shr1 M|-> .TxList) </meta-incoming>
           <meta-out-txs> .TxList </meta-out-txs>
           <global-token-settings> 
-            (.Bag => #mkGlobalTokenSetting(accountAddr(Shr1, A1), TokId, Props) )
+            (.Bag => #mkGlobalTokenSetting(addr(Shr1, A1), TokId, Props) )
             OtherGlobalTokens
           </global-token-settings>
           
@@ -32,7 +32,7 @@ module ISSUE-SPEC
           </accounts>
         // ACTIONS
         // --------------------------------------------------------------------------------
-          <user-txs> TxL((issue(accountAddr(Shr1, A1), TokId, Supply) Props) #as Tx) => .TxList </user-txs>
+          <user-txs> TxL((issue(addr(Shr1, A1), TokId, Supply) Props) #as Tx) => .TxList </user-txs>
           <incoming-txs> .MQueue => (#metachainShardId M|-> .TxList) </incoming-txs>
           <current-tx> #nullTx </current-tx>
           <steps> . </steps>
@@ -51,7 +51,7 @@ module ISSUE-SPEC
           <logs> L => (L ; // send builtin call to metachain
                        #success ; Tx ;
                         // receive the initial supply
-                       #success ; transfer(#systemAct, accountAddr(Shr1, A1), TokId, Supply, false) )
+                       #success ; transfer(#systemAct, addr(Shr1, A1), TokId, Supply, false) )
           </logs>
           ...
         </shard>

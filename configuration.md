@@ -66,7 +66,7 @@ module CONFIGURATION
     syntax Transaction ::= "#nullTx"
 
     syntax AccountAddr ::= "#systemAct" [macro]
-    rule #systemAct => accountAddr(#metachainShardId, "system")
+    rule #systemAct => addr(#metachainShardId, "system")
     
     syntax Snapshot ::= "#emptySnapshot"
                       | AccountsCell
