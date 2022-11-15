@@ -167,11 +167,51 @@ module TOKENPROPS
     // >
 endmodule
 
+module SETMAP
+    imports SET
+    imports BOOL
+
+    syntax MSet ::= Set
+
+    syntax SetMap [hook(MAP.Map)]
+
+    syntax SetMap ::= SetMap SetMap
+        [ left, function, hook(MAP.concat), klabel(_SetMap_), symbol, assoc, comm
+        , unit(.SetMap), element(_S|->_), index(0), format(%1%n%2)
+        ]
+        
+    syntax SetMap ::= ".SetMap"
+        [ function, functional, hook(MAP.unit), klabel(.SetMap), symbol
+        , latex(\dotCt{SetMap})
+        ]
+    syntax SetMap ::= KItem "S|->" MSet
+        [ function, functional, hook(MAP.element), klabel(_S|->_), symbol
+        , latex({#1}\mapsto{#2})
+        ]
+
+    syntax priorities _S|->_ > _SetMap_ .SetMap
+    syntax non-assoc _S|->_
+
+    syntax MSet ::= SetMap "[" KItem "]"                              [function, hook(MAP.lookup), klabel(SetMap:lookup), symbol]
+    
+    syntax MSet ::= SetMap "[" KItem "]" "orDefault" MSet              [function, functional, hook(MAP.lookupOrDefault), klabel(SetMap:lookupOrDefault)]
+    
+    syntax SetMap ::= SetMap "[" key: KItem "<-" value: MSet "]"     [function, functional, klabel(SetMap:update), symbol, hook(MAP.update), prefer]
+    
+    syntax Bool ::= KItem "in_keys" "(" SetMap ")"                                  [function, functional, hook(MAP.in_keys)]
+
+    
+    syntax Set ::= getSetItem(SetMap, KItem)     [function, functional]
+    rule getSetItem(M, X) => {M [X] orDefault .Set}:>Set
+
+endmodule
+
 module CONTAINERS
     imports TXLIST
     imports MULTIQUEUE
     imports BALANCEMAP
     imports TOKENPROPS
+    imports SETMAP
 endmodule
 ```
 

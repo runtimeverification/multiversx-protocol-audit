@@ -62,7 +62,98 @@ module TRANSFER
     // TODO: Check Limited Transfer
      syntax TxStep ::= "#checkLimitedTransfer"
     // --------------------------------------------------
-     rule <steps> #checkLimitedTransfer => . ... </steps> [label(check-limited-transfer)]
+     rule <shard>
+            <shard-id> ShrId </shard-id>
+            <steps> #checkLimitedTransfer => . ... </steps>
+            <current-tx> transfer(From, _, TokId, _, IsReturn) </current-tx>
+            <token-settings>
+              <token-setting>
+                <token-setting-id> TokId </token-setting-id>
+                <limited> Limited </limited>
+                ...
+              </token-setting>
+              ...
+            </token-settings>
+            
+            ...
+          </shard> 
+          requires IsReturn
+            orBool ShrId =/=Shard accountShard(From)
+            orBool notBool(Limited)
+          [label(check-limited-transfer-pass)]
+
+     rule <shard>
+            <shard-id> ShrId </shard-id>
+            <steps> #checkLimitedTransfer => #isSenderOrDestinationWithTransferRole ... </steps>
+            <current-tx> transfer(addr(ShrId, _), _, TokId, _, false) </current-tx>
+            <token-settings>
+              <token-setting>
+                <token-setting-id> TokId </token-setting-id>
+                <limited> true </limited>
+                ...
+              </token-setting>
+              ...
+            </token-settings>
+            ...
+          </shard>
+          [label(check-limited-transfer)]
+
+    syntax TxStep ::= "#isSenderOrDestinationWithTransferRole"
+                    | "#isDestinationWithTransferRole"
+    rule
+      <shard>
+        <shard-id> ShrId </shard-id>
+        <steps> #isSenderOrDestinationWithTransferRole 
+            => ( #if ESDTRoleTransfer in(getSetItem(ROLES, TokId))
+                 #then .K
+                 #else #isDestinationWithTransferRole #fi)
+               ... 
+        </steps>
+        <current-tx> transfer(addr(ShrId, A1), _, TokId, _, false) </current-tx>
+        <accounts>
+          <account> 
+            <account-name> A1 </account-name>
+            <esdt-roles> ROLES </esdt-roles>
+            ...
+          </account>
+          ...
+        </accounts>
+        ...
+      </shard>
+      [label(check-isSenderOrDestinationWithTransferRole)]
+    
+    rule
+      <shard>
+        <shard-id> ShrId </shard-id>
+        <steps> #isDestinationWithTransferRole => #failure(#ErrNilUserAccount) ... </steps>
+        <current-tx> transfer(_, addr(Shr2, _), _, _, _) </current-tx>
+        ...
+      </shard>
+      requires ShrId =/=Shard Shr2
+      [label(check-isDestinationWithTransferRole-nil)]
+         
+    rule
+      <shard>
+        <shard-id> ShrId </shard-id>
+        <steps> #isDestinationWithTransferRole
+          => ( #if ESDTRoleTransfer in(getSetItem(ROLES, TokId))
+                 #then .
+                 #else #failure(#ErrActionNotAllowed) #fi ) 
+             ...
+        </steps>
+        <current-tx> transfer(_, addr(ShrId, A2), TokId, _, _) </current-tx>
+        <accounts>
+          <account> 
+            <account-name> A2 </account-name>
+            <esdt-roles> ROLES </esdt-roles>
+            ...
+          </account>
+          ...
+        </accounts>
+        ...
+      </shard>
+      [label(check-isDestinationWithTransferRole)]
+
 ```
 
 ### Process Sender

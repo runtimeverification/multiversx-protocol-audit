@@ -3,12 +3,12 @@ addShard(2)
 addAccount(1, "A1", false)
 addAccount(2, "A2", false)
 
-addUserTx(1, 
+addUserTx( 
     issue( addr(1, "A1"), 1, 100 ) { canFreeze: true }
 )
 #wait
 
-addUserTx(1, 
+addUserTx( 
     freeze(addr(1 , "A1" ), addr(2 , "A2" ), 1, true)
 )
 
@@ -18,3 +18,13 @@ assert("A2 is frozen",
        SetItem("A2") == getFrozen(2, 1))
 assert("Empty Frozen in Shard 1", 
        .Set == getFrozen(1, 1))
+
+// send tokens to frozen account 
+
+addUserTx( 
+    transfer( addr(1, "A1"), addr(2, "A2"), 1, 10, false )
+)
+
+assert("A1's balance doesn't change", 
+       100 == getBalance(addr(1, "A1"), 1))
+

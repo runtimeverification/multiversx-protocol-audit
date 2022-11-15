@@ -5,21 +5,21 @@ addAccount(2, "A2", false)
 setBalance(addr(1, "A1"), 1, 100)
 setBalance(addr(1, "A1"), 2, 120)
 setBalance(addr(2, "A2"), 1, 10)
-addUserTx(1, 
+addUserTx( 
     transfer(
         addr(1, "A1"),
         addr(2, "A2"),
         1, 10, false
     )
 )
-addUserTx(2, 
+addUserTx( 
     transfer(
         addr(2, "A2"),
         addr(1, "A1"),
         1, 10, false
     )
 )
-addUserTx(1, 
+addUserTx( 
     transfer(
         addr(1, "A1"),
         addr(2, "A2"),

@@ -57,4 +57,10 @@ module VERIFICATION
     
     rule A in (_S1 -Set S2) => false requires A in S2    [simplification]
 
+    rule .SetMap [ _ ] orDefault .Set => .Set    [simplification]
+
+    rule .SetMap [ X <- Y ] => X S|-> Y     [simplification]
+
+    rule notBool (A ==Int B) => true requires notBool( A ==K B)    [simplification]
+  
 endmodule

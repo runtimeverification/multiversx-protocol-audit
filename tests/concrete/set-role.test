@@ -1,0 +1,33 @@
+addShard(1)
+addShard(2)
+addAccount(1, "A1", false)
+addAccount(2, "A2", false)
+
+addUserTx( 
+    issue( addr(1, "A1"), 1, 100 )
+)
+
+#wait 
+
+addUserTx( 
+    setSpecialRole( addr(1, "A1"), addr(2, "A2"), 1, ESDTRoleTransfer, true )
+)
+
+addUserTx( 
+    setSpecialRole( addr(1, "A1"), addr(2, "A2"), 1, ESDTRoleNFTUpdateAttributes, true )
+)
+
+addUserTx( 
+    setSpecialRole( addr(1, "A1"), addr(1, "A1"), 1, ESDTRoleNFTUpdateAttributes, true )
+)
+
+#wait
+
+assert("Roles", 
+        SetItem(ESDTRoleTransfer) 
+        SetItem(ESDTRoleNFTUpdateAttributes) 
+        == getRoles(addr(2, "A2"), 1))
+
+assert("Roles",  
+        SetItem(ESDTRoleNFTUpdateAttributes) 
+        == getRoles(addr(1, "A1"), 1))

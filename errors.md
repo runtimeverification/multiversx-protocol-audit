@@ -7,7 +7,8 @@ module ERRORS
                    | "#ErrESDTIsFrozenForAccount"
                    | "#ErrInsufficientFunds"
                    | "#ErrAccountNotPayable"
-
+                   | "#ErrNilUserAccount"
+                   | "#ErrActionNotAllowed"
 endmodule
 
 ```

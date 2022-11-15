@@ -1,6 +1,6 @@
 
 .PHONY: test test-all test-prove test-concrete \
-		build verification tester \
+		build verification tester search \
 		clean
 
 PROFILE :=

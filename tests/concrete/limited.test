@@ -1,0 +1,110 @@
+// Create 6 shards 
+// Create 2 accunts
+// Issue a token 
+// Add transfer role for account 2
+// - token becomes limited 
+// Add transfer role for account 2
+// - token is still limited 
+// Remove transfer role from account 2
+// - token is still limited 
+// Remove transfer role from account 1
+// - token is not limited
+
+
+addShard(1)
+addShard(2)
+addShard(3)
+addShard(4)
+addShard(5)
+addShard(6)
+addAccount(1, "A1", false)
+addAccount(2, "A2", false)
+
+addUserTx( 
+    issue( addr(1, "A1"), 1, 100 )
+)
+
+#wait 
+
+// Phase 1: Add transfer role for account 2
+
+addUserTx( 
+    setSpecialRole( addr(1, "A1"), addr(2, "A2"), 1, ESDTRoleTransfer, true )
+)
+
+#wait
+
+assert("Roles", 
+        .Set == getRoles(addr(1, "A1"), 1))
+assert("Roles", 
+        SetItem(ESDTRoleTransfer) == getRoles(addr(2, "A2"), 1))
+
+assert("Limited 1", true == isLimited(1, 1))
+assert("Limited 2", true == isLimited(2, 1))
+assert("Limited 3", true == isLimited(3, 1))
+assert("Limited 4", true == isLimited(4, 1))
+assert("Limited 5", true == isLimited(5, 1))
+assert("Limited 6", true == isLimited(6, 1))
+
+// Phase 2: Add transfer role for account 1
+
+addUserTx( 
+    setSpecialRole( addr(1, "A1"), addr(1, "A1"), 1, ESDTRoleTransfer, true )
+)
+
+#wait
+
+assert("Roles", 
+        SetItem(ESDTRoleTransfer) == getRoles(addr(1, "A1"), 1))
+assert("Roles", 
+        SetItem(ESDTRoleTransfer) == getRoles(addr(2, "A2"), 1))
+
+
+assert("Limited 1", true == isLimited(1, 1))
+assert("Limited 2", true == isLimited(2, 1))
+assert("Limited 3", true == isLimited(3, 1))
+assert("Limited 4", true == isLimited(4, 1))
+assert("Limited 5", true == isLimited(5, 1))
+assert("Limited 6", true == isLimited(6, 1))
+
+// Phase 3: Remove transfer role for account 2
+
+addUserTx( 
+    setSpecialRole( addr(1, "A1"), addr(2, "A2"), 1, ESDTRoleTransfer, false )
+)
+
+#wait
+
+assert("Roles", 
+        SetItem(ESDTRoleTransfer) == getRoles(addr(1, "A1"), 1))
+assert("Roles", 
+        .Set == getRoles(addr(2, "A2"), 1))
+
+
+assert("Limited 1", true == isLimited(1, 1))
+assert("Limited 2", true == isLimited(2, 1))
+assert("Limited 3", true == isLimited(3, 1))
+assert("Limited 4", true == isLimited(4, 1))
+assert("Limited 5", true == isLimited(5, 1))
+assert("Limited 6", true == isLimited(6, 1))
+
+// Phase 4: Remove transfer role for account 1
+
+addUserTx( 
+    setSpecialRole( addr(1, "A1"), addr(1, "A1"), 1, ESDTRoleTransfer, false )
+)
+
+#wait
+
+assert("Roles", 
+        .Set == getRoles(addr(1, "A1"), 1))
+assert("Roles", 
+        .Set == getRoles(addr(2, "A2"), 1))
+
+
+assert("Limited 1", false == isLimited(1, 1))
+assert("Limited 2", false == isLimited(2, 1))
+assert("Limited 3", false == isLimited(3, 1))
+assert("Limited 4", false == isLimited(4, 1))
+assert("Limited 5", false == isLimited(5, 1))
+assert("Limited 6", false == isLimited(6, 1))

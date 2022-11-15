@@ -6,12 +6,12 @@ addShard(5)
 addShard(6)
 addAccount(1, "A1", false)
 
-addUserTx(1, 
+addUserTx( 
     issue( addr(1, "A1"), 1, 100 ) { canPause: true }
 )
 #wait
 
-addUserTx(1, 
+addUserTx( 
     pause(addr(1 , "A1" ), 1, true)
 )
 

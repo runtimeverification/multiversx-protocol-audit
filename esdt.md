@@ -9,6 +9,7 @@ requires "configuration.md"
 requires "errors.md"
 requires "helpers.md"
 requires "transfer.md"
+requires "builtin-functions.md"
 
 module ESDT
     imports ESDT-SYNTAX
@@ -16,6 +17,7 @@ module ESDT
     imports HELPERS
     imports ERRORS
     imports TRANSFER
+    imports BUILTIN-FUNCTIONS
 
     imports BOOL
     imports INT
@@ -132,30 +134,41 @@ Cleanup when there is no outgoing transaction.
 ### Error handling
 
 Restore to snapshot
+If `Tx` is a cross shard transaction and this shard is the destination, create a transaction using `#mkReturnTx` 
+to revert the state in the sender's shard. For example, to return the tokens to the sender in cross shard transfers.
 
 ```k
      rule <shard> 
+            <shard-id> ShrId </shard-id>
             <steps> (#failure(Err) => .) ~> #finalizeTransaction </steps>
             <current-tx> Tx </current-tx>
             <snapshot> ACTS </snapshot>
             (_:AccountsCell => ACTS)
             <logs> L => (L ; #failure(Err) ; Tx ) </logs>
+            <out-txs> Txs => 
+              #if (#isCrossShard(Tx) andBool #txDestShard(Tx) ==Shard ShrId)
+              #then Txs TxL(#mkReturnTx(Tx))
+              #else Txs #fi            
+            </out-txs>
             ...
           </shard>
-          requires notBool( #isCrossShard(Tx) )
+//          requires notBool( #isCrossShard(Tx) )
+//            orBool #txDestShard(Tx) =/=Shard ShrId
           [label(finalize-failure-log-revert)]
 
-     rule <shard> 
-            <steps> (#failure(Err) => .) ~> #finalizeTransaction </steps>
-            <current-tx> Tx </current-tx>
-            <snapshot> ACTS </snapshot>
-            (_:AccountsCell => ACTS)
-            <logs> L => (L ; #failure(Err) ; Tx ) </logs>
-            <out-txs> ... (.TxList => TxL(#mkReturnTx(Tx))) </out-txs>
-            ...
-          </shard>
-          requires #isCrossShard(Tx)
-          [label(finalize-failure-log-revert-cross)]
+     //rule <shard> 
+     //       <shard-id> ShrId </shard-id>
+     //       <steps> (#failure(Err) => .) ~> #finalizeTransaction </steps>
+     //       <current-tx> Tx </current-tx>
+     //       <snapshot> ACTS </snapshot>
+     //       (_:AccountsCell => ACTS)
+     //       <logs> L => (L ; #failure(Err) ; Tx ) </logs>
+     //       <out-txs> ... (.TxList => TxL(#mkReturnTx(Tx))) </out-txs>
+     //       ...
+     //     </shard>
+     //     requires #isCrossShard(Tx)
+     //      andBool #txDestShard(Tx) ==Shard ShrId
+     //     [label(finalize-failure-log-revert-cross)]
           
      rule <steps> #failure(_) ~> (T:TxStep => .) ... </steps> requires T =/=K #finalizeTransaction    [label(failure-skip-rest)] 
     
@@ -169,6 +182,7 @@ Restore to snapshot
      rule #mkReturnTx(_:ESDTManage)    => #nullTx
      rule #mkReturnTx(doFreeze(_,_,_)) => #nullTx
      rule #mkReturnTx(setGlobalSetting(_,_,_,_))  => #nullTx
+     rule #mkReturnTx(setESDTRole(_,_,_, _))  => #nullTx
      
 ```
 
@@ -199,6 +213,7 @@ Send ESDT management operations to the system SC on Metachain
           <is-running> #no => #metachainShardId </is-running>
           [label(meta-take-incoming-tx)]
 ```
+
 
 ### Issue fungible tokens
 
@@ -236,8 +251,10 @@ Send ESDT management operations to the system SC on Metachain
             <global-token-setting>
               <global-token-id> TokId </global-token-id>
               <global-token-paused> false </global-token-paused>
+              <global-token-limited> false </global-token-limited>
               <global-token-owner> Owner </global-token-owner>
               <global-token-props> #makeProperties(Props) </global-token-props>
+              <global-esdt-roles> .SetMap </global-esdt-roles>
             </global-token-setting>
 ```
 
@@ -252,7 +269,7 @@ Send the initial supply to the token owner using the `transfer` function.
 
 ### Freeze/Unfreeze
 
-At Metachain, check the ownership and token properties. Then, call the builtin function `freeze` at the destination account's shard.
+At Metachain, check the ownership and token properties. Then, call the builtin function `doFreeze` at the destination account's shard.
 
 ```k
 
@@ -272,50 +289,80 @@ At Metachain, check the ownership and token properties. Then, call the builtin f
           [label(freeze-at-meta)]
 ```
 
-At the destination shard, update the set of frozen accounts.
+### Set special role
+
+At Metachain, check the ownership and token properties. Then, call the builtin function `setESDTRole` at the destination account's shard.
 
 ```k
-     rule <shard>
-            <steps> 
-              . => #createDefaultTokenSettings(TokId)
-                ~> #updateFrozen
-                ~> #success
-                ~> #finalizeTransaction
-            </steps>
-            <current-tx> doFreeze(TokId, _, _) </current-tx>
-            ...
-          </shard>  [label(freeze-at-shard)]
+// TODO  update global esdt roles and toggle limited if needed
 
-     syntax TxStep ::= "#updateFrozen"
-     rule <shard>
-            <steps> #updateFrozen => . ... </steps>
-            <current-tx> doFreeze(TokId, addr(_, ActName), true) </current-tx>
-            <token-settings>
-              <token-setting>
-                <token-setting-id> TokId </token-setting-id>
-                <frozen> Frozen => Frozen |Set SetItem(ActName) </frozen>
-                ...
-              </token-setting>
+     rule <meta-steps> setSpecialRole(Caller, OtherAct, TokId, Role, Val) 
+              => checkLimited(TokId, Role, Val, ROLES)
+              ~> #finalizeTransaction
+          </meta-steps> 
+          <global-token-settings>
+            <global-token-setting>
+              <global-token-id> TokId </global-token-id>
+              <global-token-owner> Caller </global-token-owner>
+              <global-token-props> Props </global-token-props>
+              <global-esdt-roles> 
+                ROLES => setMapToggle(ROLES, Role, OtherAct, Val) 
+              </global-esdt-roles> // ESDTRole |-> Set<AccountAddr>
               ...
-            </token-settings>
+            </global-token-setting>
             ...
-          </shard>
-          [label(frozen-add)]
-     
-     rule <shard>
-            <steps> #updateFrozen => . ... </steps>
-            <current-tx> doFreeze(TokId, addr(_, ActName), false) </current-tx>
-            <token-settings>
-              <token-setting>
-                <token-setting-id> TokId </token-setting-id>
-                <frozen> Frozen => Frozen -Set SetItem(ActName) </frozen>
-                ...
-              </token-setting>
-              ...
-            </token-settings>
-            ...
-          </shard>
-          [label(frozen-remove)]
+          </global-token-settings>
+          <meta-out-txs> ... (.TxList => TxL( setESDTRole(TokId, OtherAct, Role, Val) ) ) </meta-out-txs>
+          requires hasProp(Props, canAddSpecialRoles)
+          [label(set-special-role-meta)]
+```
+
+```k
+    syntax KItem ::= checkLimited(TokenId, ESDTRole, Bool, SetMap)
+
+```
+
+First transfer role set, send limited global setting to all shards.
+    
+```k
+    rule
+      <meta-steps> checkLimited(TokId, ESDTRoleTransfer, true, OldRoles) 
+                => sendGlobalSettingToAll(TokId, limited, true, .Set) ... 
+      </meta-steps>
+      <global-token-settings>
+        <global-token-setting>
+          <global-token-id> TokId </global-token-id>
+          <global-token-limited> _ => true </global-token-limited>
+          ...
+        </global-token-setting>
+        ...
+      </global-token-settings>
+      requires getSetItem(OldRoles, ESDTRoleTransfer) ==K .Set
+```
+
+Last transfer role removed
+
+```k
+    rule
+      <meta-steps> checkLimited(TokId, ESDTRoleTransfer, false, OldRoles) 
+                => sendGlobalSettingToAll(TokId, limited, false, .Set) ... 
+      </meta-steps>
+      <global-token-settings>
+        <global-token-setting>
+          <global-token-id> TokId </global-token-id>
+          <global-esdt-roles> Roles </global-esdt-roles>
+          <global-token-limited> _ => false </global-token-limited>
+          ...
+        </global-token-setting>
+        ...
+      </global-token-settings>
+      requires getSetItem(OldRoles, ESDTRoleTransfer) =/=K .Set
+       andBool getSetItem(Roles, ESDTRoleTransfer) ==K .Set
+
+    rule
+      <meta-steps> checkLimited(_, _, _, _) => . ... </meta-steps>
+      [priority(160)]  // has lower priority than the above and higher than owise
+
 ```
 
 ### Pause/Unpause
@@ -361,56 +408,14 @@ At Metachain, check the ownership and token properties. Then, call the builtin f
 
 ```
 
-At the destination shard, pause the token.
 
-```k
-     rule <shard>
-            <steps> 
-              . => #createDefaultTokenSettings(TokId)
-                ~> #updateMetadata
-                ~> #success
-                ~> #finalizeTransaction
-            </steps>
-            <current-tx> setGlobalSetting(_, TokId, _, _) </current-tx>
-            ...
-          </shard>  [label(pause-at-shard)]
-
-     syntax TxStep ::= "#updateMetadata"
-     rule <shard>
-            <steps> #updateMetadata => . ... </steps>
-            <current-tx> setGlobalSetting(_, TokId, paused, Val) </current-tx>
-            <token-settings>
-              <token-setting>
-                <token-setting-id> TokId </token-setting-id>
-                <paused> _ => Val </paused>
-                ...
-              </token-setting>
-              ...
-            </token-settings>
-            ...
-          </shard>  [label(update-pause)]
-
-     rule <shard>
-            <steps> #updateMetadata => . ... </steps>
-            <current-tx> setGlobalSetting(_, TokId, limited, Val) </current-tx>
-            <token-settings>
-              <token-setting>
-                <token-setting-id> TokId </token-setting-id>
-                <limited> _ => Val </limited>
-                ...
-              </token-setting>
-              ...
-            </token-settings>
-            ...
-          </shard>  [label(update-limited)]
-```
 
 
 ### Upgrade properties
 
 ```k
 
-     rule <meta-steps> controlChanges(Caller, TokId) Props => #finalizeTransaction
+     rule <meta-steps> controlChanges(Caller, TokId, Props) => #finalizeTransaction
           </meta-steps> 
           <global-token-settings>
             <global-token-setting>

@@ -20,8 +20,10 @@ module CONFIGURATION
             <global-token-setting multiplicity="*" type="Map">
               <global-token-id>     0:TokenId </global-token-id>
               <global-token-paused> false </global-token-paused>
+              <global-token-limited> false </global-token-limited>
               <global-token-owner>  #systemAct </global-token-owner>
               <global-token-props>  #defaultTokenProps </global-token-props>
+              <global-esdt-roles> .SetMap </global-esdt-roles> // ESDTRole |-> Set<AccountAddr>
             </global-token-setting>
           </global-token-settings>
         </meta>
@@ -40,6 +42,7 @@ module CONFIGURATION
                 <account-name> "":AccountName </account-name>
                 <is-sc> false </is-sc>
                 <esdt-balances> .BalMap </esdt-balances>
+                <esdt-roles> .SetMap </esdt-roles> // TokenId |-> Set<ESDTRole>
               </account>
             </accounts>
 

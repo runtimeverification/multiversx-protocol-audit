@@ -9,14 +9,16 @@ module TESTER-SYNTAX
     syntax Stmt ::= "#wait"
                   | addShard(ShardId)
                   | addAccount(ShardId, AccountName, Bool)
-                  | addUserTx(ShardId, Transaction)
+                  | addUserTx(Transaction)
                   | setBalance(AccountAddr, TokenId, Int)
                   | assert(String, Exp)                             [strict(2)]
 
     syntax Exp ::= Int | Bool | Set
                  | getBalance(AccountAddr, TokenId)
+                 | getRoles(AccountAddr, TokenId)
                  | getFrozen(ShardId, TokenId)
                  | isPaused(ShardId, TokenId)
+                 | isLimited(ShardId, TokenId)
                  | Exp "==" Exp   [seqstrict]
 
     syntax Value ::= Int | Bool | Set
@@ -98,6 +100,7 @@ module TESTER
             <account-name> ActName </account-name>
             <is-sc> IsSc </is-sc>
             <esdt-balances> .BalMap </esdt-balances>
+            <esdt-roles> .SetMap </esdt-roles>
           </account>) 
           ... 
         </accounts>
@@ -107,12 +110,13 @@ module TESTER
 
 
     rule 
-      <k> addUserTx(ShrdId, Tx) => . ... </k>
+      <k> addUserTx(Tx) => . ... </k>
       <shard>
         <shard-id> ShrdId </shard-id>
         <user-txs> Txs => Txs TxL(Tx) </user-txs>
         ...
       </shard>
+      requires ShrdId ==Shard #txSenderShard(Tx)
       [priority(30)]
 
     
@@ -141,6 +145,21 @@ module TESTER
           <account> 
             <account-name> ActName </account-name>
             <esdt-balances> BALS </esdt-balances>
+            ...
+          </account>
+          ...
+        </accounts>
+        ...
+      </shard>
+
+    rule 
+      <k> getRoles(addr(ShrId, ActName), TokId) => getSetItem(ROLES, TokId) ... </k>
+      <shard>
+        <shard-id> ShrId </shard-id>
+        <accounts>
+          <account> 
+            <account-name> ActName </account-name>
+            <esdt-roles> ROLES </esdt-roles>
             ...
           </account>
           ...
@@ -178,6 +197,20 @@ module TESTER
         ...
       </shard>
 
+    rule 
+      <k> isLimited(ShrId, TokId) => P ... </k>
+      <shard>
+        <shard-id> ShrId </shard-id>
+        <token-settings>
+          <token-setting>
+            <token-setting-id> TokId </token-setting-id>
+            <limited> P </limited>
+            ...
+          </token-setting>
+          ...
+        </token-settings>
+        ...
+      </shard>
 
     rule <k> A:Value  == B:Value  => A ==K B ... </k>
 

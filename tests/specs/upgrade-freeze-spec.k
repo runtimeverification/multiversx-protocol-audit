@@ -28,7 +28,7 @@ module UPGRADE-FREEZE-SPEC
         // ACTIONS
         // --------------------------------------------------------------------------------
           <user-txs> 
-            TxL( (controlChanges(  addr(Shr1, A1), TokId) {canFreeze: true}) #as Tx1)
+            TxL( controlChanges(  addr(Shr1, A1), TokId, {canFreeze: true}) #as Tx1)
             TxL( freeze(  addr(Shr1, A1), addr(Shr1, A2), TokId, true) #as Tx2) 
             => .TxList </user-txs>
           <incoming-txs> .MQueue => (#metachainShardId M|-> .TxList) </incoming-txs>
@@ -53,7 +53,7 @@ module UPGRADE-FREEZE-SPEC
           <logs> L => (L ; // send builtin call to metachain
                        #success ; Tx1 ;
                        #success ; Tx2 ;
-                        // receive the initial supply
+                        // receive the builtin call
                        #success ; doFreeze(TokId, addr(Shr1, A2), true) )
           </logs>
           ...

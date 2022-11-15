@@ -19,9 +19,10 @@ module ESDT-SYNTAX
                          | ESDTManage       // SC Calls to the ESDT system SC
 
     syntax ESDTManage ::= "issue" "(" AccountAddr "," TokenId "," Int ")" Properties   
-                        | "freeze" "(" AccountAddr "," AccountAddr "," TokenId "," Bool ")"
-                        | "controlChanges" "(" AccountAddr "," TokenId ")" Properties
-                        | "pause" "(" AccountAddr "," TokenId "," Bool ")"
+                        | freeze( AccountAddr , AccountAddr , TokenId , Bool )
+                        | controlChanges( AccountAddr , TokenId , Properties )
+                        | pause( AccountAddr , TokenId , Bool )
+                        | setSpecialRole( AccountAddr , AccountAddr , TokenId , ESDTRole , Bool )
 
     syntax Properties ::= ""
                         | "{" PropertyList "}"
@@ -33,8 +34,9 @@ module ESDT-SYNTAX
 
 
     syntax BuiltinCall ::= ESDTTransfer
-                         | "doFreeze" "(" TokenId "," AccountAddr "," Bool ")"
-                         | "setGlobalSetting" "(" ShardId "," TokenId "," MetadataKey "," Bool ")"
+                         | doFreeze( TokenId , AccountAddr , Bool )
+                         | setGlobalSetting( ShardId , TokenId , MetadataKey , Bool )
+                         | setESDTRole( TokenId , AccountAddr , ESDTRole , Bool )
 
     syntax MetadataKey ::= "paused"
                          | "limited"
@@ -42,7 +44,15 @@ module ESDT-SYNTAX
 
     syntax ESDTTransfer ::= transfer( AccountAddr, AccountAddr, TokenId, Int, Bool )
     
-
+    syntax ESDTRole ::= "ESDTRoleLocalMint"
+                      | "ESDTRoleLocalBurn"
+                      | "ESDTRoleNFTCreate"
+                      | "ESDTRoleNFTCreateMultiShard"
+                      | "ESDTRoleNFTAddQuantity"
+                      | "ESDTRoleNFTBurn"
+                      | "ESDTRoleNFTAddURI"
+                      | "ESDTRoleNFTUpdateAttributes"
+                      | "ESDTRoleTransfer"
 
 endmodule
 
