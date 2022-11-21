@@ -13,6 +13,8 @@ concurrency:
 jobs:
   esdt-test:
     name: ESDT Test
+    container: 
+      image: runtimeverificationinc/kframework-k:ubuntu-jammy-5.5.29
     runs-on: [ self-hosted, linux, flyweight ]
     steps:
       - name: 'Checkout code'
@@ -23,6 +25,8 @@ jobs:
 
   esdt-test-prove:
     name: ESDT Prove 
+    container: 
+      image: runtimeverificationinc/kframework-k:ubuntu-jammy-5.5.29
     runs-on: [ self-hosted, linux, normal ]
     steps:
       - name: Run Prove
