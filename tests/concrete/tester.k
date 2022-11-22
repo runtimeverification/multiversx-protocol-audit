@@ -151,6 +151,7 @@ module TESTER
         </accounts>
         ...
       </shard>
+      [priority(30)]
 
     rule 
       <k> getRoles(addr(ShrId, ActName), TokId) => getSetItem(ROLES, TokId) ... </k>
@@ -166,6 +167,7 @@ module TESTER
         </accounts>
         ...
       </shard>
+      [priority(30)]
 
     rule 
       <k> getFrozen(ShrId, TokId) => FROZEN ... </k>
@@ -181,6 +183,7 @@ module TESTER
         </token-settings>
         ...
       </shard>
+      [priority(30)]
 
     rule 
       <k> isPaused(ShrId, TokId) => P ... </k>
@@ -196,6 +199,7 @@ module TESTER
         </token-settings>
         ...
       </shard>
+      [priority(30)]
 
     rule 
       <k> isLimited(ShrId, TokId) => P ... </k>
@@ -211,6 +215,7 @@ module TESTER
         </token-settings>
         ...
       </shard>
+      [priority(30)]
 
     rule <k> A:Value  == B:Value  => A ==K B ... </k>
 
