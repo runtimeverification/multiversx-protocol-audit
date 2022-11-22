@@ -39,9 +39,9 @@ module TESTER
     syntax AccountCell
 
     
-    rule <k> S:Stmt SS:Stmts => S ~> SS ... </k>     [structural]
+    rule <k> S:Stmt SS:Stmts => S ~> SS ... </k>     [priority(20), structural]
     rule <k> .Stmts => . </k>
-         <status-code> _ => 0 </status-code>
+         <status-code> _ => 0 </status-code>         [priority(21)]
     
     rule <k> #wait => . ... </k> requires #executionFinished
 
@@ -89,7 +89,7 @@ module TESTER
         </shard>)
         ...
       </shards>
-      [priority(30)]
+      [priority(25)]
 
 
     rule 
@@ -106,7 +106,7 @@ module TESTER
         </accounts>
         ...
       </shard>
-      [priority(30)]   
+      [priority(26)]   
 
 
     rule 
@@ -117,7 +117,7 @@ module TESTER
         ...
       </shard>
       requires ShrdId ==Shard #txSenderShard(Tx)
-      [priority(30)]
+      [priority(27)]
 
     
     rule 
@@ -134,7 +134,7 @@ module TESTER
         </accounts>
         ...
       </shard>
-      [priority(30)]
+      [priority(28)]
 
     
     rule 
@@ -151,7 +151,7 @@ module TESTER
         </accounts>
         ...
       </shard>
-      [priority(30)]
+      [priority(29)]
 
     rule 
       <k> getRoles(addr(ShrId, ActName), TokId) => getSetItem(ROLES, TokId) ... </k>
@@ -183,7 +183,7 @@ module TESTER
         </token-settings>
         ...
       </shard>
-      [priority(30)]
+      [priority(31)]
 
     rule 
       <k> isPaused(ShrId, TokId) => P ... </k>
@@ -199,7 +199,7 @@ module TESTER
         </token-settings>
         ...
       </shard>
-      [priority(30)]
+      [priority(32)]
 
     rule 
       <k> isLimited(ShrId, TokId) => P ... </k>
@@ -215,13 +215,13 @@ module TESTER
         </token-settings>
         ...
       </shard>
-      [priority(30)]
+      [priority(33)]
 
     rule <k> A:Value  == B:Value  => A ==K B ... </k>
 
-    rule <k> assert(_, true) => . ... </k>
+    rule <k> assert(_, true) => . ... </k>                          [owise]
 
     syntax KItem ::= "#assertionFailed" "(" String ")"
-    rule <k> assert(Msg, false) => #assertionFailed(Msg) ... </k>
+    rule <k> assert(Msg, false) => #assertionFailed(Msg) ... </k>   [owise]
 
 endmodule
