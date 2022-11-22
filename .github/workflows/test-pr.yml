@@ -1,0 +1,36 @@
+---
+name: 'Test PR'
+on:
+  workflow_dispatch:
+  pull_request:
+    types: [opened, edited, reopened, synchronize]
+    branches: 
+      - 'master'
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.sha }}
+  cancel-in-progress: true
+
+jobs:
+  esdt-test:
+    name: ESDT Test
+    container: 
+      image: runtimeverificationinc/kframework-k:ubuntu-jammy-5.5.29
+    runs-on: [ self-hosted, linux, flyweight ]
+    steps:
+      - name: 'Checkout code'
+        uses: actions/checkout@v3
+      - name: Run Tests
+        run: |
+          make test-concrete
+
+  esdt-test-prove:
+    name: ESDT Prove 
+    container: 
+      image: runtimeverificationinc/kframework-k:ubuntu-jammy-5.5.29
+    runs-on: [ self-hosted, linux, normal ]
+    steps:
+      - name: Run Prove
+        uses: actions/checkout@v3
+      - name: Run Prove
+        run: |
+          make test-prove
