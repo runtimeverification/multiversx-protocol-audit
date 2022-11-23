@@ -59,7 +59,6 @@ module TRANSFER
            andBool 0 <Int Val                             // >
           [label(check-val-is-positive)]
 
-    // TODO: Check Limited Transfer
      syntax TxStep ::= "#checkLimitedTransfer"
     // --------------------------------------------------
      rule <shard>
@@ -74,7 +73,6 @@ module TRANSFER
               </token-setting>
               ...
             </token-settings>
-            
             ...
           </shard> 
           requires IsReturn
@@ -418,9 +416,5 @@ Check Frozen
           </shard>
           [label(update-balance)]
 
-```
-
-
-```k
 endmodule
 ```

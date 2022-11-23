@@ -8,22 +8,6 @@ module HELPERS
     syntax Bool ::= #isCrossShard(Transaction)          [function, functional]
     rule #isCrossShard(Tx) => #txSenderShard(Tx) =/=Shard #txDestShard(Tx)
     
-    syntax Bool ::= #onDestShard(ShardId, Transaction)            [function, functional]
-                  | #onSenderShard(ShardId, Transaction)          [function, functional]
-    rule #onDestShard(Shr, Tx)   => Shr ==Shard #txDestShard(Tx)
-    rule #onSenderShard(Shr, Tx) => Shr ==Shard #txSenderShard(Tx)
-    
-    syntax Bool ::= #checkSender(AccountName, Int, Int, Set, Bool) [function, functional]
-                  | #checkDest(  AccountName,      Int, Set, Bool) [function, functional]
-    rule #checkSender(SndName, Bal, Val, Frozen, Paused) => notBool Paused 
-                                                    andBool notBool(SndName in Frozen) 
-                                                    andBool 0 <Int Val                    // >
-                                                    andBool Val <=Int Bal
-    rule #checkDest(DestName, Val, Frozen, Paused) => notBool Paused 
-                                              andBool notBool(DestName in Frozen) 
-                                              andBool 0 <Int Val    // >
-
-    
     syntax ShardId ::= #txDestShard(Transaction)        [function, functional]
                      | #txSenderShard(Transaction)      [function, functional]
     // builtin functions

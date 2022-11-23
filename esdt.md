@@ -152,29 +152,10 @@ to revert the state in the sender's shard. For example, to return the tokens to 
             </out-txs>
             ...
           </shard>
-//          requires notBool( #isCrossShard(Tx) )
-//            orBool #txDestShard(Tx) =/=Shard ShrId
           [label(finalize-failure-log-revert)]
 
-     //rule <shard> 
-     //       <shard-id> ShrId </shard-id>
-     //       <steps> (#failure(Err) => .) ~> #finalizeTransaction </steps>
-     //       <current-tx> Tx </current-tx>
-     //       <snapshot> ACTS </snapshot>
-     //       (_:AccountsCell => ACTS)
-     //       <logs> L => (L ; #failure(Err) ; Tx ) </logs>
-     //       <out-txs> ... (.TxList => TxL(#mkReturnTx(Tx))) </out-txs>
-     //       ...
-     //     </shard>
-     //     requires #isCrossShard(Tx)
-     //      andBool #txDestShard(Tx) ==Shard ShrId
-     //     [label(finalize-failure-log-revert-cross)]
-          
      rule <steps> #failure(_) ~> (T:TxStep => .) ... </steps> requires T =/=K #finalizeTransaction    [label(failure-skip-rest)] 
     
-```
-
-```k
      syntax Transaction ::= #mkReturnTx(Transaction)       [function, functional]
   // ------------------------------------------------------------------------------------
      rule #mkReturnTx(transfer(Sender, Dest, TokId, Val, _)) => transfer(Dest, Sender, TokId, Val, true)
@@ -294,7 +275,6 @@ At Metachain, check the ownership and token properties. Then, call the builtin f
 At Metachain, check the ownership and token properties. Then, call the builtin function `setESDTRole` at the destination account's shard.
 
 ```k
-// TODO  update global esdt roles and toggle limited if needed
 
      rule <meta-steps> setSpecialRole(Caller, OtherAct, TokId, Role, Val) 
               => checkLimited(TokId, Role, Val, ROLES)
@@ -317,14 +297,11 @@ At Metachain, check the ownership and token properties. Then, call the builtin f
           [label(set-special-role-meta)]
 ```
 
-```k
-    syntax KItem ::= checkLimited(TokenId, ESDTRole, Bool, SetMap)
-
-```
-
 First transfer role set, send limited global setting to all shards.
     
 ```k
+    syntax KItem ::= checkLimited(TokenId, ESDTRole, Bool, SetMap)
+
     rule
       <meta-steps> checkLimited(TokId, ESDTRoleTransfer, true, OldRoles) 
                 => sendGlobalSettingToAll(TokId, limited, true, .Set) ... 
@@ -408,9 +385,6 @@ At Metachain, check the ownership and token properties. Then, call the builtin f
 
 ```
 
-
-
-
 ### Upgrade properties
 
 ```k
@@ -447,9 +421,6 @@ At Metachain, check the ownership and token properties. Then, call the builtin f
      rule <meta-steps> #finalizeTransaction => . </meta-steps>
           <meta-out-txs> .TxList </meta-out-txs>
           <is-running> #metachainShardId => #no </is-running>
-```
 
-
-```k
 endmodule
 ```
