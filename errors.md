@@ -9,6 +9,8 @@ module ERRORS
                    | "#ErrAccountNotPayable"
                    | "#ErrNilUserAccount"
                    | "#ErrActionNotAllowed"
+                   | "#ErrNegativeValue"
+                   | "#ErrUnknownAccount"
 endmodule
 
 ```

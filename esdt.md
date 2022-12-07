@@ -145,14 +145,21 @@ to revert the state in the sender's shard. For example, to return the tokens to 
             <snapshot> ACTS </snapshot>
             (_:AccountsCell => ACTS)
             <logs> L => (L ; #failure(Err) ; Tx ) </logs>
-            <out-txs> Txs => 
-              #if (#isCrossShard(Tx) andBool #txDestShard(Tx) ==Shard ShrId)
-              #then Txs TxL(#mkReturnTx(Tx))
-              #else Txs #fi            
-            </out-txs>
+            <out-txs> Txs => Txs TxL(#mkReturnTx(Tx)) </out-txs>
             ...
           </shard>
-          [label(finalize-failure-log-revert)]
+          requires #isCrossShard(Tx) andBool (#txDestShard(Tx) ==Shard ShrId)
+          [label(finalize-failure-log-revert-cross)]
+
+     rule <shard>
+            <steps> (#failure(Err) => .) ~> #finalizeTransaction </steps>
+            <current-tx> Tx </current-tx>
+            <snapshot> ACTS </snapshot>
+            (_:AccountsCell => ACTS)
+            <logs> L => (L ; #failure(Err) ; Tx ) </logs>
+            ...
+          </shard>
+          [label(finalize-failure-log-revert), priority(160)]
 
      rule <steps> #failure(_) ~> (T:TxStep => .) ... </steps> requires T =/=K #finalizeTransaction    [label(failure-skip-rest)] 
     
@@ -209,7 +216,7 @@ Send ESDT management operations to the system SC on Metachain
            andBool notBool( TokId in( #tokenIds(GTS) ) )
            [label(start-issue-at-meta)]
 
-     syntax Set ::= #tokenIds(GlobalTokenSettingsCell)         [function, functional]
+     syntax Set ::= #tokenIds(GlobalTokenSettingsCell)         [function, total]
      rule #tokenIds(<global-token-settings> .Bag </global-token-settings> ) => .Set
      rule #tokenIds(<global-token-settings> 
                       <global-token-setting>

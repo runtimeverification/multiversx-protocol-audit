@@ -33,7 +33,7 @@ module ESDT-SYNTAX
                           | "canUpgrade" | "canAddSpecialRoles"
 
 
-    syntax BuiltinCall ::= ESDTTransfer
+    syntax BuiltinCall ::= transfer( AccountAddr, AccountAddr, TokenId, Int, Bool )
                          | doFreeze( TokenId , AccountAddr , Bool )
                          | setGlobalSetting( ShardId , TokenId , MetadataKey , Bool )
                          | setESDTRole( TokenId , AccountAddr , ESDTRole , Bool )
@@ -41,8 +41,6 @@ module ESDT-SYNTAX
     syntax MetadataKey ::= "paused"
                          | "limited"
                          // | "burnRoleForAll"
-
-    syntax ESDTTransfer ::= transfer( AccountAddr, AccountAddr, TokenId, Int, Bool )
     
     syntax ESDTRole ::= "ESDTRoleLocalMint"
                       | "ESDTRoleLocalBurn"
