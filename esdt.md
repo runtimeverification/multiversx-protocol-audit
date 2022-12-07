@@ -156,7 +156,7 @@ to revert the state in the sender's shard. For example, to return the tokens to 
 
      rule <steps> #failure(_) ~> (T:TxStep => .) ... </steps> requires T =/=K #finalizeTransaction    [label(failure-skip-rest)] 
     
-     syntax Transaction ::= #mkReturnTx(Transaction)       [function, functional]
+     syntax Transaction ::= #mkReturnTx(Transaction)       [function, total]
   // ------------------------------------------------------------------------------------
      rule #mkReturnTx(transfer(Sender, Dest, TokId, Val, _)) => transfer(Dest, Sender, TokId, Val, true)
      rule #mkReturnTx(#nullTx) => #nullTx
@@ -226,7 +226,7 @@ Send ESDT management operations to the system SC on Metachain
             ...
           </global-token-settings>
 
-     syntax GlobalTokenSettingCell ::= #mkGlobalTokenSetting(AccountAddr, TokenId, Properties)      [function, functional]
+     syntax GlobalTokenSettingCell ::= #mkGlobalTokenSetting(AccountAddr, TokenId, Properties)      [function, total]
   // -----------------------------------------------------------------------------------------  
      rule #mkGlobalTokenSetting(Owner, TokId, Props) => 
             <global-token-setting>

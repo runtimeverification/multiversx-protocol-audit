@@ -266,7 +266,7 @@ If token settings does not exist on this shard, create default token settings
                                           REST 
                                         </token-settings>) requires TokId =/=K TokId2
 
-     syntax TokenSettingCell ::= #mkTokenSetting(TokenId)      [function, functional]
+     syntax TokenSettingCell ::= #mkTokenSetting(TokenId)      [function, total]
   // -----------------------------------------------------------------------------------------  
      rule #mkTokenSetting(TokId) => 
           <token-setting>
@@ -387,12 +387,12 @@ Check Frozen
          andBool notBool (#isPayable(Tx))
 
   // TODO complete #mustVerifyPayable definition
-  syntax Bool ::= "#mustVerifyPayable" "(" ESDTTransfer ")"   [function, functional]
+  syntax Bool ::= "#mustVerifyPayable" "(" Transaction ")"   [function, total]
   rule #mustVerifyPayable(transfer(_, _, _, _, true))  => false
   rule #mustVerifyPayable(transfer(_, _, _, _, false)) => true
   
   // TODO complete #isPayable definition
-  syntax Bool ::= "#isPayable"  "(" ESDTTransfer ")"          [function, functional]
+  syntax Bool ::= "#isPayable"  "(" Transaction ")"          [function, total]
   rule #isPayable(_) => true
 
 ```
