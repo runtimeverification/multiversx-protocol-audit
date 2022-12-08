@@ -92,5 +92,34 @@ module FUNCTIONAL-SPEC
         runLemma( #makeProperties({ A : B }) ) => doneLemma( #defaultTokenProps [ A <- B ] ) ... 
     </meta-steps>
 
+
+    claim <meta-steps> 
+        runLemma( 
+            #getBalance( #addBalMap(.BalMap, Bs )
+                       , TokId) 
+        ) 
+            => 
+        doneLemma( #getBalance(Bs, TokId) ) ...
+    </meta-steps>
+
+    claim <meta-steps> 
+        runLemma( 
+            #getBalance(#addBalMap( 
+                1 B|-> _XA1
+                2 B|-> _XA2
+                3 B|-> XA3
+                5 B|-> _XA5 ,
+
+                1 B|-> _XB1
+                3 B|-> XB3
+                4 B|-> _XB4
+                5 B|-> _XB5
+            ), 3) 
+        ) 
+        
+        => 
+        doneLemma( XA3 +Int XB3 ) ... 
+    </meta-steps>
+
 endmodule
 
