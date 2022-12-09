@@ -74,7 +74,9 @@ module BALANCEMAP
     imports INT
 
     syntax BalMap [hook(MAP.Map)]
-    syntax Integer ::= Int
+    syntax Integer ::= i(Int)
+    syntax Int ::= asInt(Integer)       [function, total]
+    rule asInt(i(I)) => I
 
     syntax BalMap ::= BalMap BalMap
         [ left, function, hook(MAP.concat), klabel(_BalMap_), symbol, assoc, comm
@@ -102,10 +104,10 @@ module BALANCEMAP
     syntax Bool ::= TokenId "in_keys" "(" BalMap ")"                            [function, total, hook(MAP.in_keys)]
 
     syntax BalMap ::= #addToBalance( BalMap , TokenId , Int )                           [function, total]
-    rule #addToBalance(Bs, TokId, Val) => Bs [TokId <- #getBalance(Bs, TokId) +Int Val] 
+    rule #addToBalance(Bs, TokId, Val) => Bs [TokId <- i(#getBalance(Bs, TokId) +Int Val)] 
     
     syntax Int ::= #getBalance(BalMap, TokenId)    [function, total]
-    rule #getBalance(M, A) => {M [ A ] orDefault 0}:>Int
+    rule #getBalance(M, A) => asInt(M [ A ] orDefault i(0))
 
 endmodule
 

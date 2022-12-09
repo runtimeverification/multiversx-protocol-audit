@@ -19,7 +19,7 @@ module CROSS-SPEC
         <accounts>
           <account>
             <account-name> A1 </account-name>
-            <esdt-balances> ... TokId B|-> (BAL1 => BAL1 -Int Val) ... </esdt-balances>
+            <esdt-balances> ... TokId B|-> i(BAL1 => BAL1 -Int Val) ... </esdt-balances>
             ...
           </account>
           ...
@@ -59,7 +59,7 @@ module CROSS-SPEC
         <accounts>
           <account>
             <account-name> A2 </account-name>
-            <esdt-balances> ... TokId B|-> (BAL2 => BAL2 +Int Val) ... </esdt-balances>
+            <esdt-balances> ... TokId B|-> i(BAL2 => BAL2 +Int Val) ... </esdt-balances>
             ...
           </account>
           ...

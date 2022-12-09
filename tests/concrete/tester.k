@@ -127,7 +127,7 @@ module TESTER
         <accounts> 
           <account>
             <account-name> ActName </account-name>
-            <esdt-balances> BALS => BALS [TokId <- Val] </esdt-balances>
+            <esdt-balances> BALS => BALS [TokId <- i(Val)] </esdt-balances>
             ...
           </account>
           ...

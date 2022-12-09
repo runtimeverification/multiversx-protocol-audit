@@ -23,8 +23,8 @@ module VERIFICATION
     rule (K  B|->  V M:BalMap) [ K ] orDefault _ => V                requires notBool (K in_keys(M))        [simplification]
     rule (K  B|->  V M:BalMap) [ K ]             => V                requires notBool (K in_keys(M))        [simplification]
     rule (X  B|->  _ M:BalMap) [ X <- Y ]        => (X B|-> Y) M     requires notBool(X in_keys(M))         [simplification]
-    rule M:BalMap [ Tok1 <- _ ] [ Tok2 ] orDefault 0 => M [ Tok2 ] orDefault 0 requires Tok1 =/=K Tok2       [simplification]
-    rule _:BalMap [ Tok1 <- V ] [ Tok2 ] orDefault 0 => V requires Tok1 ==K Tok2       [simplification]
+    rule M:BalMap [ Tok1 <- _ ] [ Tok2 ] orDefault D => M [ Tok2 ] orDefault D requires Tok1 =/=K Tok2       [simplification]
+    rule _:BalMap [ Tok1 <- V ] [ Tok2 ] orDefault _ => V requires Tok1 ==K Tok2       [simplification]
     
     rule M:BalMap [ X ] orDefault Y => Y                             requires notBool(X in_keys(M))         [simplification]
 
@@ -96,36 +96,34 @@ module VERIFICATION
     syntax BalMap ::= #addBalMap(BalMap, BalMap) [function, total, no-evaluators]
 
     // rule #getBalance(#addBalMap(A,B), TokId) => ...
-    rule project:Int( #addBalMap(A,B) [ TokId ] orDefault 0 ~> . ) 
+    rule asInt( #addBalMap(A,B) [ TokId ] orDefault i(0)) 
         => #getBalance(A, TokId) +Int #getBalance(B, TokId)             [simplification]
 
     rule A +Int V +Int (B -Int V +Int C) => B +Int (A +Int C)             [simplification]
     rule A -Int V +Int (B +Int V +Int C) => B +Int (A +Int C)             [simplification]
 
-    rule project:Int ( A ~> . ) 
-          -Int Gen4 
-          +Int ( project:Int ( B ~> . ) 
-                  +Int Gen4 
-                  +Int project:Int( C ~> . ) 
-          ) 
-          
-      => 
-        project:Int ( A ~> . ) 
-          +Int ( project:Int ( B ~> . ) 
-                  +Int project:Int ( C ~> . ) 
-          ) [simplification]
+    syntax Int ::= #balanceOut(ShardId, TokenId, TxList)  [function, total]
+    rule #balanceOut(_, _, .TxList) => 0
+    
+    rule #balanceOut( ShrId, TokId, TxL(Tx) Rest) 
+        => #balanceOut(ShrId, TokId, Rest) +Int #balanceOutTx(ShrId, TokId, Tx)   [simplification]
 
-    rule project:Int ( A ~> . ) 
-            +Int Gen4 
-            +Int ( project:Int ( B ~> . ) 
-                    -Int Gen4 
-                    +Int project:Int ( C ~> . ) 
-            ) 
-      => 
-        project:Int ( A ~> . ) 
-          +Int ( project:Int ( B ~> . ) 
-                  +Int project:Int ( C ~> . ) 
-          ) [simplification]
+    // calculate the total balance being sent to a shard via cross-shard transfers
+    syntax Int ::= #balanceIn(ShardId, TokenId, MQueue)  [function, total, no-evaluators]
+    rule #balanceIn ( ShrTo, TokId, push(MQ, _, Tx) ) 
+        => #balanceIn(ShrTo, TokId, MQ) +Int #balanceInTx(ShrTo, TokId, Tx)     [simplification]
+
+    syntax Int ::= #balanceInTx(ShardId, TokenId, Transaction)    [function, total]
+    rule #balanceInTx(ShrId, TokId, transfer(From, To, TokId, Val, _)) => Val 
+      requires ShrId =/=Shard accountShard(From)
+       andBool ShrId ==Shard accountShard(To)
+    rule #balanceInTx(_, _, _) => 0             [owise]
+    
+    syntax Int ::= #balanceOutTx(ShardId, TokenId, Transaction)    [function, total]
+    rule #balanceOutTx(ShrId, TokId, transfer(From, To, TokId, Val, _)) => Val 
+      requires ShrId =/=Shard accountShard(To)
+       andBool ShrId ==Shard accountShard(From)
+    rule #balanceOutTx(_, _, _) => 0             [owise]
 
 endmodule
 

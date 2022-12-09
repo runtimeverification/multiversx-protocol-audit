@@ -105,20 +105,60 @@ module FUNCTIONAL-SPEC
     claim <meta-steps> 
         runLemma( 
             #getBalance(#addBalMap( 
-                1 B|-> _XA1
-                2 B|-> _XA2
-                3 B|-> XA3
-                5 B|-> _XA5 ,
+                1 B|-> i(_XA1)
+                2 B|-> i(_XA2)
+                3 B|-> i(XA3)
+                5 B|-> i(_XA5) ,
 
-                1 B|-> _XB1
-                3 B|-> XB3
-                4 B|-> _XB4
-                5 B|-> _XB5
+                1 B|-> i(_XB1)
+                3 B|-> i(XB3)
+                4 B|-> i(_XB4)
+                5 B|-> i(_XB5)
             ), 3) 
         ) 
         
         => 
         doneLemma( XA3 +Int XB3 ) ... 
+    </meta-steps>
+
+    claim <meta-steps> 
+        runLemma( #balanceOut(
+            _, _,
+            TxL(transfer(addr(1,_), addr(1,_), _, _, _))
+            TxL(transfer(addr(1,_), addr(1,_), _, _, _))
+            TxL(transfer(addr(1,_), addr(1,_), _, _, _))
+            TxL(transfer(addr(1,_), addr(1,_), _, _, _))    
+        ) ) 
+        => 
+        doneLemma( 0 ) ... 
+    </meta-steps>
+
+
+    claim <meta-steps> 
+        runLemma( #balanceOut(
+            1, 1,
+            TxL(transfer(addr(1,_), addr(1,_), _, _, _))
+            TxL(transfer(addr(1,_), addr(2,_), 1, 10, _))
+            TxL(transfer(addr(1,_), addr(1,_), 2, 999, _))
+            TxL(transfer(addr(1,_), addr(3,_), 1, 5, _))
+        ) ) 
+        => 
+        doneLemma( 15 ) ... 
+    </meta-steps>
+
+    claim <meta-steps> 
+        runLemma( #balanceOut(
+            _, _, TxL(_:ESDTManage)
+        ) ) 
+        => 
+        doneLemma( 0 ) ... 
+    </meta-steps>
+
+
+    claim <meta-steps> 
+        runLemma( #balanceOut(_, _, .TxList) ) 
+        => 
+        doneLemma( 0 ) ... 
     </meta-steps>
 
 endmodule
