@@ -20,6 +20,7 @@ module CROSS-DEST-FAIL-SPEC
           <account>
             <account-name> A2 </account-name>
             <esdt-balances> ... TokId B|-> i(BAL2)  ... </esdt-balances>
+            <payable> true </payable>
             ...
           </account>
           ...

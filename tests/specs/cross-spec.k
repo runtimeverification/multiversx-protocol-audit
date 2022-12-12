@@ -60,6 +60,7 @@ module CROSS-SPEC
           <account>
             <account-name> A2 </account-name>
             <esdt-balances> ... TokId B|-> i(BAL2 => BAL2 +Int Val) ... </esdt-balances>
+            <payable> true </payable>
             ...
           </account>
           ...

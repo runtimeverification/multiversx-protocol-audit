@@ -26,6 +26,7 @@ module SIMPLE-SPEC
           <account>
             <account-name> A2 </account-name>
             <esdt-balances> ... TokId B|-> i(BAL2 => BAL2 +Int Val) ... </esdt-balances>
+            <payable> true </payable>
             ...
           </account>
           ...    
@@ -86,6 +87,7 @@ module SIMPLE-SPEC
           <account>
             <account-name> A2 </account-name>
             <esdt-balances> ... TokId B|-> i(BAL2) ... </esdt-balances>
+            <payable> true </payable>
             ...
           </account>
           ...    

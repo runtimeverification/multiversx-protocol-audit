@@ -344,34 +344,33 @@ Check Frozen
      syntax TxStep ::= "#checkPayable"
   // --------------------------------------------------
      rule <shard>
+            <shard-id> ShrId </shard-id>
             <steps> #checkPayable => . ...  </steps>
-            <current-tx> Tx </current-tx>
+            <current-tx> transfer(_, addr(ShrId, ActName), _, _, _) #as Tx </current-tx>
+            <account>
+              <account-name> ActName </account-name>
+              <is-sc> IsSc </is-sc>
+              <payable> Payable </payable>
+              ...
+            </account>
             ...
             </shard>
-        requires notBool #mustVerifyPayable(Tx)
-          orBool #isPayable(Tx)
+        requires (notBool(#mustVerifyPayable(Tx)))
+          orBool (notBool(IsSc))
+          orBool (Payable)
         [label(checkPayable-pass)]
 
      rule <shard>
             <steps> #checkPayable => #failure(#ErrAccountNotPayable) ...  </steps>
-            <current-tx> Tx </current-tx>
             ...
           </shard>
-        requires #mustVerifyPayable(Tx)
-         andBool notBool (#isPayable(Tx))
-        [label(checkPayable-fail)]
+        [label(checkPayable-fail), priority(160)]
 
-  // TODO complete #mustVerifyPayable definition
+  // TODO return 'false' for transfer & execute
   syntax Bool ::= "#mustVerifyPayable" "(" Transaction ")"   [function, total]
-  rule #mustVerifyPayable(transfer(_, _, _, _, true))  => false
-  rule #mustVerifyPayable(transfer(_, _, _, _, false)) => true
-  // ---------------------------------------------------------------- unused
-  rule #mustVerifyPayable(_) => false                             [owise]
+  rule #mustVerifyPayable(transfer(Sender, _, _, _, IsReturn)) => false requires Sender ==K #systemAct orBool IsReturn
+  rule #mustVerifyPayable(_) => true                             [owise]
   
-  // TODO complete #isPayable definition
-  syntax Bool ::= "#isPayable"  "(" Transaction ")"          [function, total]
-  rule #isPayable(_) => true
-
 ```
 
 ### Update balance

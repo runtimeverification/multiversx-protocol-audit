@@ -20,6 +20,7 @@ module CROSS-DEST-SPEC
           <account>
             <account-name> A2 </account-name>
             <esdt-balances> ... TokId B|-> i(BAL2 => BAL2 +Int Val) ... </esdt-balances>
+            <payable> true </payable>
             ...
           </account>
           ...
@@ -58,7 +59,6 @@ module CROSS-DEST-SPEC
       </shard>
     </shards>
       requires ShrId1 =/=Shard ShrId2
-       andBool ShrId2 =/=Shard #metachainShardId
        andBool notBool(A2 in Frozen2)
        andBool 0 <Int Val
        andBool 0 <=Int BAL2 // >

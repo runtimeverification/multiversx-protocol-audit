@@ -47,6 +47,7 @@ module CONFIGURATION
               <account multiplicity="*" type="Map">
                 <account-name> "":AccountName </account-name>
                 <is-sc> false </is-sc>
+                <payable> false </payable>
                 <esdt-balances> .BalMap </esdt-balances>
                 <esdt-roles> .SetMap </esdt-roles> // TokenId |-> Set<ESDTRole>
               </account>
