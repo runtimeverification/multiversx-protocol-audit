@@ -125,6 +125,68 @@ module VERIFICATION
        andBool ShrId ==Shard accountShard(From)
     rule #balanceOutTx(_, _, _) => 0             [owise]
 
+    // Check if the execution cells (<current-tx/> and <steps/>) in all shards are empty
+    syntax Bool ::= #allEmpty(ShardsCell)   [function, total]
+    rule #allEmpty(<shards> .Bag </shards>) => true
+    /////////////////////////
+    // Option 1:
+    // rule #allEmpty(<shards> 
+    //                 Shard:ShardCell
+    //                 Rest
+    //               </shards>) => #emptySteps(Shard) andBool #allEmpty(<shards> Rest </shards>)
+    /////////////////////////
+
+    /////////////////////////
+    // Option 2:
+    rule #allEmpty(<shards> 
+                    Shard:ShardCell
+                    _Rest
+                  </shards>) => false requires notBool(#emptySteps(Shard))
+                  
+    rule #allEmpty(<shards> 
+                    Shard:ShardCell
+                    Rest
+                  </shards>) => #allEmpty(<shards> Rest </shards>) requires #emptySteps(Shard)
+    //////////////////////////
+
+
+    syntax Bool ::= #emptySteps(ShardCell)        [function, total]
+    rule #emptySteps(<shard> 
+                      <steps> Ss </steps>
+                      <current-tx> Tx </current-tx>
+                      _          
+                    </shard>) => false requires Ss =/=K .K orBool Tx =/=K #nullTx
+    rule #emptySteps(<shard> 
+                      <steps> . </steps>
+                      <current-tx> #nullTx </current-tx>
+                      _          
+                    </shard>) => true
+
+    rule #allEmpty(<shards> 
+                    Shard:ShardCell
+                    _Rest
+                  </shards>) => false requires notBool(#emptySteps(Shard))  [simplification]
+                  
+    rule #allEmpty(<shards> 
+                    Shard:ShardCell
+                    Rest
+                  </shards>) => #allEmpty(<shards> Rest </shards>) requires #emptySteps(Shard)
+                  [simplification]
+
+    rule #allEmpty(<shards> 
+                    Shard:ShardCell
+                    Rest
+                  </shards>) => #emptySteps(Shard) andBool #allEmpty(<shards> Rest </shards>) [simplification]
+    
+    rule #allEmpty(<shards> 
+                    <shard> 
+                      <steps> Ss </steps>
+                      <current-tx> Tx </current-tx>
+                      _          
+                    </shard>
+                    _Rest
+                  </shards>) => false requires  Ss =/=K .K orBool Tx =/=K #nullTx [simplification]
+
 endmodule
 
 

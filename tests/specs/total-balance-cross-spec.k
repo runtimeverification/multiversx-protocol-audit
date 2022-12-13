@@ -27,9 +27,11 @@ module TOTAL-BALANCE-CROSS-SPEC
           <token-settings> _ => ?_ </token-settings>  
           ...
         </shard>
+        OtherShards
       </shards>
       requires #txSenderShard(Tx) ==Shard ShrId
        andBool #txDestShard(Tx) =/=Shard ShrId
+       andBool #allEmpty(<shards> OtherShards </shards>)
        ensures #getBalance( #totalBalance(<accounts> ACTS   </accounts>), TokId) 
          ==Int #getBalance( #totalBalance(<accounts> ?ACTS2 </accounts>), TokId)
           +Int #balanceOut(ShrId, TokId, ?OutTxs)
