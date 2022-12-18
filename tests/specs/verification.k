@@ -75,23 +75,18 @@ module VERIFICATION
         } ) => #Bottom                  [simplification]
 
     syntax BalMap ::= #totalBalance(AccountsCell)      [function, total]
-    rule #totalBalance(<accounts> .Bag </accounts>) => .BalMap
-    rule #totalBalance(<accounts> 
-                          <account>
+                    | #totalBalanceH(AccountsCell, BalMap) [function, total]
+    rule #totalBalance(Acts) => #totalBalanceH(Acts, .BalMap)
+    rule #totalBalanceH(<accounts> .Bag </accounts>, Acc) => Acc
+    rule #totalBalanceH(<accounts> 
+                          (<account>
                             <esdt-balances> BALS </esdt-balances>
                             _
-                          </account>
-                          Rest 
-                        </accounts>) => #addBalMap(BALS, #totalBalance(<accounts> Rest </accounts>))
-
-    rule #totalBalance(<accounts> 
-                          <account>
-                            <esdt-balances> BALS </esdt-balances>
-                            _
-                          </account>
-                          Rest 
-                        </accounts>) => #addBalMap(BALS, #totalBalance(<accounts> Rest </accounts>)) [simplification]
-    
+                          </account> => .Bag)
+                          _ 
+                        </accounts>, Acc => #addBalMap(BALS, Acc))        [simplification] 
+    rule #totalBalanceH(Acts, #addBalMap(_,_) #as Acc) => #addBalMap( #totalBalanceH(Acts, .BalMap)
+                                                                    , Acc)    [simplification]
 
     syntax BalMap ::= #addBalMap(BalMap, BalMap) [function, total, no-evaluators]
 
