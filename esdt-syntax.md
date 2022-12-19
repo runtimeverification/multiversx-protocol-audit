@@ -34,6 +34,8 @@ module ESDT-SYNTAX
 
 
     syntax BuiltinCall ::= transfer( AccountAddr, AccountAddr, TokenId, Int, Bool )
+                         | localMint( AccountAddr, TokenId, Int )
+                         | localBurn( AccountAddr, TokenId, Int )
                          | doFreeze( TokenId , AccountAddr , Bool )
                          | setGlobalSetting( ShardId , TokenId , MetadataKey , Bool )
                          | setESDTRole( TokenId , AccountAddr , ESDTRole , Bool )

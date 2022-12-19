@@ -10,6 +10,104 @@ module BUILTIN-FUNCTIONS
     imports TRANSFER
 ```
 
+## Local Mint
+
+```k
+     rule <shard>
+            <shard-id> ShrId </shard-id>
+            <current-tx> localMint(addr(ShrId, Act), TokId, Val) </current-tx>
+            <steps> . => #takeSnapshot
+                      ~> #checkLocalMint
+                      ~> #updateBalance(Act, TokId, Val) 
+                      ~> #success
+                      ~> #finalizeTransaction
+            </steps>
+            ...
+          </shard>  [label(localMint-steps)]
+
+    syntax TxStep ::= "#checkLocalMint"
+    rule
+      <shard>
+        <steps> #checkLocalMint => . ... </steps>
+        <current-tx> localMint(addr(_, Act), TokId, Val) </current-tx>
+        <account>
+          <account-name> Act </account-name>
+          <esdt-roles> ROLES </esdt-roles>
+          ... 
+        </account>
+        ...
+      </shard>  
+      requires ESDTRoleLocalMint in(getSetItem(ROLES, TokId))
+       andBool 0 <Int Val
+      [label(checkLocalMint-pass)]
+
+    rule
+      <shard>
+        <current-tx> localMint(_, _, Val) </current-tx>
+        <steps> 
+          #checkLocalMint => #failure(
+                              #if Val <=Int 0
+                              #then #ErrNegativeValue
+                              #else #ErrActionNotAllowed
+                              #fi
+                             ) 
+                            ... 
+        </steps>
+        ...
+      </shard>
+      [label(checkLocalMint-fail), priority(160)]
+
+```
+
+## Local Burn
+
+```k
+     rule <shard>
+            <shard-id> ShrId </shard-id>
+            <current-tx> localBurn(addr(ShrId, Act), TokId, Val) </current-tx>
+            <steps> . => #takeSnapshot
+                      ~> #checkLocalBurn
+                      ~> #updateBalance(Act, TokId, 0 -Int Val) 
+                      ~> #success
+                      ~> #finalizeTransaction
+            </steps>
+            ...
+          </shard>  [label(localBurn-steps)]
+
+    syntax TxStep ::= "#checkLocalBurn"
+    rule
+      <shard>
+        <steps> #checkLocalBurn => . ... </steps>
+        <current-tx> localBurn(addr(_, Act), TokId, Val) </current-tx>
+        <account>
+          <account-name> Act </account-name>
+          <esdt-roles> ROLES </esdt-roles>
+          ... 
+        </account>
+        ...
+      </shard>  
+      requires ESDTRoleLocalBurn in(getSetItem(ROLES, TokId))
+       andBool 0 <Int Val
+      [label(checkLocalBurn-pass)]
+
+    rule
+      <shard>
+        <current-tx> localBurn(_, _, Val) </current-tx>
+        <steps> 
+          #checkLocalBurn => #failure(
+                              #if Val <=Int 0
+                              #then #ErrNegativeValue
+                              #else #ErrActionNotAllowed
+                              #fi
+                             ) 
+                            ... 
+        </steps>
+        ...
+      </shard>
+      [label(checkLocalBurn-fail), priority(160)]
+
+```
+
 ## Freeze/Unfreeze
 
 ```k

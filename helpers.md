@@ -15,6 +15,8 @@ module HELPERS
     rule #txDestShard(doFreeze(_, ACT, _))        => accountShard(ACT)
     rule #txDestShard(setGlobalSetting(ShrId, _, _, _))       => ShrId
     rule #txDestShard(setESDTRole(_, ACT, _, _))       => accountShard(ACT)
+    rule #txDestShard(localMint(ACT, _, _))       => accountShard(ACT)
+    rule #txDestShard(localBurn(ACT, _, _))       => accountShard(ACT)
     // esdt SC calls
     rule #txDestShard(_:ESDTManage)                => #metachainShardId    
     //
@@ -25,6 +27,8 @@ module HELPERS
     rule #txSenderShard(doFreeze(_, _, _))            => #metachainShardId    
     rule #txSenderShard(setGlobalSetting(_, _, _, _)) => #metachainShardId    
     rule #txSenderShard(setESDTRole(_, _, _, _))      => #metachainShardId  
+    rule #txSenderShard(localMint(ACT, _, _))         => accountShard(ACT)  
+    rule #txSenderShard(localBurn(ACT, _, _))         => accountShard(ACT)  
     // esdt SC calls
     rule #txSenderShard(issue(ACT, _, _) _)         => accountShard(ACT)    
     rule #txSenderShard(freeze(ACT, _, _, _))       => accountShard(ACT)

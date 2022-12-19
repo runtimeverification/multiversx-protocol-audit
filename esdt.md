@@ -171,6 +171,8 @@ to revert the state in the sender's shard. For example, to return the tokens to 
      rule #mkReturnTx(doFreeze(_,_,_)) => #nullTx
      rule #mkReturnTx(setGlobalSetting(_,_,_,_))  => #nullTx
      rule #mkReturnTx(setESDTRole(_,_,_, _))  => #nullTx
+     rule #mkReturnTx(localMint(_,_,_))       => #nullTx
+     rule #mkReturnTx(localBurn(_,_,_))       => #nullTx
      
 ```
 
