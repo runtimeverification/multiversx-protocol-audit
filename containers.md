@@ -1,7 +1,18 @@
+This file contains definitions for typed containers implemented using builtin hooks:
+
+* [Transaction lists](#transaction-list)
+* [Multi Queue](#multi-queue)
+* [Balance Map](#balance-map)
+* [Token Property Map](#token-property-map)
+* [Set Map](#set-map)
 
 ```k
 requires "esdt-syntax.md"
+```
 
+## Transaction List
+
+```k
 module TXLIST
     imports ESDT-SYNTAX
 
@@ -17,7 +28,13 @@ module TXLIST
     rule isEmpty(.TxList)         => true
     rule isEmpty(TxL(_) _:TxList) => false
 endmodule
+```
 
+## Multi Queue
+
+An `MQueue` is a multi-queue implemented as a map from `ShardId` to `TxList`. 
+ 
+```k
 module MULTIQUEUE
 
     imports TXLIST
@@ -66,7 +83,10 @@ module MULTIQUEUE
     rule isEmpty((_:ShardId M|-> Txs ) _)  => false       requires notBool( isEmpty(Txs) )
 
 endmodule
+```
+## Balance Map
 
+```k
 module BALANCEMAP
 
     imports ESDT-SYNTAX
@@ -110,7 +130,13 @@ module BALANCEMAP
     rule #getBalance(M, A) => asInt(M [ A ] orDefault i(0))
 
 endmodule
+```
 
+## Token Property Map
+
+A map from `PropertyName` to `Bool`
+
+```k
 module TOKENPROPS
     imports ESDT-SYNTAX
     imports BOOL
@@ -168,7 +194,13 @@ module TOKENPROPS
      
     // >
 endmodule
+```
 
+## Set Map
+
+Map from `KItem` to `Set`
+
+```k
 module SETMAP
     imports SET
     imports BOOL

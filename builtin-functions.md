@@ -10,21 +10,63 @@ module BUILTIN-FUNCTIONS
     imports TRANSFER
 ```
 
-## Local Mint
+# Execute builtin functions
+
+[Go to implementation](https://github.com/multiversx/mx-chain-go/blob/bcca886ce2ee9eb5fec9e1dddef1143fc6f6593e/process/smartContract/process.go#L931)
+
+First, take a snapshot to use in error handling, and then call the builtin function.
+
+```k
+
+     rule <shard>
+            <current-tx> _:BuiltinCall </current-tx>
+            <steps> . => #takeSnapshot
+                      ~> #processBuiltinFunction
+                      ~> #success
+                      ~> #finalizeTransaction
+            </steps>
+            ...
+          </shard>  [label(execute=builtin-function)]
+```
+
+## Take snapshot
+
+[Go to implementation](https://github.com/multiversx/mx-chain-go/blob/bcca886ce2ee9eb5fec9e1dddef1143fc6f6593e/process/smartContract/process.go#L940)
+
+The snapshot contains the initial data in the accounts cell. If the execution fails, the state will be reverted to this snapshot.
+
+```k
+     syntax TxStep ::= "#takeSnapshot"
+  // ---------------------------------------------
+     rule <shard>
+            <steps> #takeSnapshot => . ... </steps>
+            (ACTS:AccountsCell)
+            <snapshot> _ => ACTS </snapshot>
+            ...
+          </shard> [label(take-snapshot)]
+```
+
+# Local Mint
+
+[Go to implementation](https://github.com/multiversx/mx-chain-vm-common-go/blob/755643b6f3982d2deb61782fffc492037f1aeb24/builtInFunctions/esdtLocalMint.go#L64)
 
 ```k
      rule <shard>
             <shard-id> ShrId </shard-id>
             <current-tx> localMint(addr(ShrId, Act), TokId, Val) </current-tx>
-            <steps> . => #takeSnapshot
-                      ~> #checkLocalMint
-                      ~> #updateBalance(Act, TokId, Val) 
-                      ~> #success
-                      ~> #finalizeTransaction
+            <steps> #processBuiltinFunction 
+                 => #checkLocalMint
+                 ~> #updateBalance(Act, TokId, Val) ...
             </steps>
             ...
           </shard>  [label(localMint-steps)]
+```
 
+Check the preconditions:
+* the value must be positive: [Go to implementation](https://github.com/multiversx/mx-chain-vm-common-go/blob/755643b6f3982d2deb61782fffc492037f1aeb24/builtInFunctions/esdtLocalMint.go#L71)
+* the account must have the `ESDTRoleLocalMint` role: [Go to implementation](https://github.com/multiversx/mx-chain-vm-common-go/blob/755643b6f3982d2deb61782fffc492037f1aeb24/builtInFunctions/esdtLocalMint.go#L77)
+
+```k
     syntax TxStep ::= "#checkLocalMint"
     rule
       <shard>
@@ -61,19 +103,26 @@ module BUILTIN-FUNCTIONS
 
 ## Local Burn
 
+[Go to implementation](https://github.com/multiversx/mx-chain-vm-common-go/blob/755643b6f3982d2deb61782fffc492037f1aeb24/builtInFunctions/esdtLocalBurn.go#L64)
+
 ```k
      rule <shard>
             <shard-id> ShrId </shard-id>
             <current-tx> localBurn(addr(ShrId, Act), TokId, Val) </current-tx>
-            <steps> . => #takeSnapshot
-                      ~> #checkLocalBurn
-                      ~> #updateBalance(Act, TokId, 0 -Int Val) 
-                      ~> #success
-                      ~> #finalizeTransaction
+            <steps> #processBuiltinFunction 
+                 => #checkLocalBurn
+                 ~> #updateBalance(Act, TokId, 0 -Int Val) ...
             </steps>
             ...
           </shard>  [label(localBurn-steps)]
+```
 
+* the value must be positive: [Go to implementation](https://github.com/multiversx/mx-chain-vm-common-go/blob/755643b6f3982d2deb61782fffc492037f1aeb24/builtInFunctions/esdtLocalBurn.go#L71)
+* The account must be allowed to burn: [Go to implementation](https://github.com/multiversx/mx-chain-vm-common-go/blob/755643b6f3982d2deb61782fffc492037f1aeb24/builtInFunctions/esdtLocalBurn.go#L77)
+
+The `#updateBalance` step checks if the account has enough balance to burn.
+
+```k
     syntax TxStep ::= "#checkLocalBurn"
     rule
       <shard>
@@ -110,14 +159,16 @@ module BUILTIN-FUNCTIONS
 
 ## Freeze/Unfreeze
 
+[Go to implementation](https://github.com/multiversx/mx-chain-vm-common-go/blob/755643b6f3982d2deb61782fffc492037f1aeb24/builtInFunctions/esdtFreezeWipe.go#L77)
+
+The `doFreeze` function toggles the freeze status of an account. It is always called from the system SC, so there is no precondition check.
+
 ```k
      rule <shard>
             <current-tx> doFreeze(TokId, _, _) </current-tx>
-            <steps> . => #takeSnapshot
-                      ~> #createDefaultTokenSettings(TokId)
-                      ~> #updateFrozen
-                      ~> #success
-                      ~> #finalizeTransaction
+            <steps> #processBuiltinFunction 
+                 => #createDefaultTokenSettings(TokId)
+                 ~> #updateFrozen ...
             </steps>
             ...
           </shard>  [label(freeze-at-shard)]
@@ -142,15 +193,16 @@ module BUILTIN-FUNCTIONS
 
 ## Set global setting
 
+[Go to implementation](https://github.com/multiversx/mx-chain-vm-common-go/blob/755643b6f3982d2deb61782fffc492037f1aeb24/builtInFunctions/esdtGlobalSettings.go#L74)
+
+Toggles the `paused` and `limited` settings. Always called from Metachain.
 
 ```k
      rule <shard>
             <current-tx> setGlobalSetting(_, TokId, _, _) </current-tx>
-            <steps> . => #takeSnapshot
-                      ~> #createDefaultTokenSettings(TokId)
-                      ~> #updateMetadata
-                      ~> #success
-                      ~> #finalizeTransaction
+            <steps> #processBuiltinFunction 
+                 => #createDefaultTokenSettings(TokId)
+                 ~> #updateMetadata ...
             </steps>
             ...
           </shard>  [label(setGlobalSetting-steps)]
@@ -187,24 +239,14 @@ module BUILTIN-FUNCTIONS
 
 ## Set ESDT Role
 
+[Go to implementation](https://github.com/multiversx/mx-chain-vm-common-go/blob/755643b6f3982d2deb61782fffc492037f1aeb24/builtInFunctions/esdtRoles.go#L44)
+
+Sets or unsets an ESDT role for given account. Always called from Metachain.
 
 ```k
     rule 
       <shard>
-        <current-tx> setESDTRole(_, _, _, _) </current-tx>
-        <steps> . => #takeSnapshot
-                  ~> #updateESDTRole
-                  ~> #success
-                  ~> #finalizeTransaction
-        </steps>
-        ...
-      </shard>  [label(set-esdt-role)]
-
-
-    syntax TxStep ::= "#updateESDTRole"
-    rule 
-      <shard>
-        <steps> #updateESDTRole => . ... </steps>
+        <steps> #processBuiltinFunction => . ... </steps>
         <current-tx> setESDTRole(TokId, addr(_, ActName), Role, P) </current-tx>
         <accounts>
           <account>
@@ -215,14 +257,14 @@ module BUILTIN-FUNCTIONS
           ...
         </accounts>
         ...
-      </shard>  [label(update-esdt-role)]
+      </shard>  [label(set-esdt-role)]
 
     rule 
       <shard>
-        <steps> #updateESDTRole => #failure(#ErrUnknownAccount) ... </steps>
+        <steps> #processBuiltinFunction => #failure(#ErrUnknownAccount) ... </steps>
         <current-tx> setESDTRole(_, _, _, _) </current-tx>
         ...
-      </shard>    [label(update-esdt-role-unknown-act), priority(160)]
+      </shard>  [label(set-esdt-role-unknown-acct), priority(160)]
 
 endmodule
 ```

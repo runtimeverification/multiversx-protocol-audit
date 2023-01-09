@@ -1,4 +1,3 @@
-# ESDT Transfer
 
 ```k
 requires "configuration.md"
@@ -9,36 +8,29 @@ module TRANSFER
     imports HELPERS
 
     imports K-EQUAL
-       
+
+    syntax TxStep ::= "#processBuiltinFunction"
+```
+
+# ESDT Transfer
+
+Execute the ESDT Transfer builtin function: [Go to implementation](https://github.com/multiversx/mx-chain-vm-common-go/blob/755643b6f3982d2deb61782fffc492037f1aeb24/builtInFunctions/esdtTransfer.go#L100)
+
+```k
      rule <shard>
-            <steps> . => #takeSnapshot
-                      ~> #createDefaultTokenSettings(TokId)
-                      ~> #basicChecks
-                      ~> #checkLimitedTransfer
-                      ~> #processSender
-                      ~> #processDest
-                      ~> #success
-                      ~> #finalizeTransaction
+            <steps> #processBuiltinFunction 
+                 => #createDefaultTokenSettings(TokId)
+                 ~> #basicChecks
+                 ~> #checkLimitedTransfer
+                 ~> #processSender
+                 ~> #processDest ...
             </steps>
             <current-tx> transfer(_, _, TokId, _, _) </current-tx>
             ...
           </shard>  [label(esdt-transfer-steps)]
 ```
 
-### Take snapshot
-
-```k
-     syntax TxStep ::= "#takeSnapshot"
-  // ---------------------------------------------
-     rule <shard>
-            <steps> #takeSnapshot => . ... </steps>
-            (ACTS:AccountsCell)
-            <snapshot> _ => ACTS </snapshot>
-            ...
-          </shard> [label(take-snapshot)]
-```
-
-### Common precondition checks
+# Common precondition checks
 
 ```k
      syntax TxStep ::= "#basicChecks"
@@ -63,14 +55,20 @@ module TRANSFER
             ...
           </shard>  
           [label(basicChecks-fail), priority(160)]
+```
 
+# Limited transfer check
 
+```k
      syntax TxStep ::= "#checkLimitedTransfer"
 ```
-  Skip if
-  * not limited
-  * return transfer
-  * this shard is destination
+
+Skip if
+  * not limited or
+  * return transfer or
+  * this shard is the destination
+
+[Go to implementation](https://github.com/multiversx/mx-chain-vm-common-go/blob/755643b6f3982d2deb61782fffc492037f1aeb24/builtInFunctions/esdtTransfer.go#L346)
 
 ```k
      rule <shard>
@@ -136,8 +134,11 @@ module TRANSFER
 
 ```
 
-### Process Sender
+# Process Sender
 
+[Go to implementation](https://github.com/multiversx/mx-chain-vm-common-go/blob/755643b6f3982d2deb61782fffc492037f1aeb24/builtInFunctions/esdtTransfer.go#L135)
+
+## Process sender at destination shard
 Skip if sender is not at this shard
 
 ```k   
@@ -152,13 +153,14 @@ Skip if sender is not at this shard
           requires ShrId =/=Shard #txSenderShard(Tx)
           [label(process-sender-at-dest-shard-skip)]
 ```
-Check gas and token settings, then decrease the sender's balance.
+## Process sender at sender shard
+
+Check token settings, then decrease the sender's balance.
 
 ```k
      rule <shard> 
             <shard-id> ShrId </shard-id>
             <steps> #processSender => #checkTokenSettings(TokId, ActName)
-                                   ~> #checkBalance(ActName, TokId, Val)
                                    ~> #updateBalance(ActName, TokId, 0 -Int Val)
                                    ... 
             </steps>
@@ -168,7 +170,11 @@ Check gas and token settings, then decrease the sender's balance.
           [label(process-sender-at-sender-shard)]
 ```
 
-### Process destination
+# Process destination
+
+[Go to implementation](https://github.com/multiversx/mx-chain-vm-common-go/blob/755643b6f3982d2deb61782fffc492037f1aeb24/builtInFunctions/esdtTransfer.go#L149)
+
+## Process destination at sender shard
 
 If the destination is not at this shard, add the transaction to the output queue. 
 
@@ -186,7 +192,10 @@ If the destination is not at this shard, add the transaction to the output queue
           [label(process-dest-at-sender-shard-out-tx)]
 ```
 
-Perform payable and token settings checks, then, increase the destination account's balance. 
+## Process destination at destination shard
+
+* Check payable: [Go to implementation](https://github.com/multiversx/mx-chain-vm-common-go/blob/755643b6f3982d2deb61782fffc492037f1aeb24/builtInFunctions/esdtTransfer.go#L150) 
+* Check token settings and increase the destination account's balance: [Go to implementation](https://github.com/multiversx/mx-chain-vm-common-go/blob/755643b6f3982d2deb61782fffc492037f1aeb24/builtInFunctions/esdtTransfer.go#L155)
 
 ```k
      rule <shard> 
@@ -204,7 +213,7 @@ Perform payable and token settings checks, then, increase the destination accoun
 
 
 
-### Check token settings
+# Check token settings
 
 If token settings does not exist on this shard, create default token settings
     
@@ -245,7 +254,7 @@ If token settings does not exist on this shard, create default token settings
           </token-setting>
 ```
 
-Check Paused
+Check Paused: [Go to implementation](https://github.com/multiversx/mx-chain-vm-common-go/blob/755643b6f3982d2deb61782fffc492037f1aeb24/builtInFunctions/esdtTransfer.go#L251)
 
 ```k
      syntax TxStep ::= #checkTokenSettings(TokenId, AccountName)
@@ -299,13 +308,15 @@ Check Frozen
         requires notBool( ActName in Frozen )         [label(pass-check-token-settings)]
 ```
 
-### Check sender's balance
+# Check balance
+
+Balance must be non-negative.
 
 ```k
-     syntax TxStep ::= #checkBalance(AccountName, TokenId, Int)
+     syntax TxStep ::= #checkBalance(AccountName, TokenId)
   // ----------------------------------------------------------
      rule <shard>
-            <steps> #checkBalance(ActName, TokId, Val) => . ... </steps>
+            <steps> #checkBalance(ActName, TokId) => . ... </steps>
             <accounts>
               <account>
                 <account-name> ActName </account-name>
@@ -316,10 +327,10 @@ Check Frozen
             </accounts>
             ...
           </shard>
-        requires Val <=Int #getBalance(BALS, TokId)     [label(pass-balance-check)]
+        requires 0 <=Int #getBalance(BALS, TokId)     [label(pass-balance-check)]
     
      rule <shard>
-            <steps> #checkBalance(ActName, TokId, Val) => #failure(#ErrInsufficientFunds) ... </steps>
+            <steps> #checkBalance(ActName, TokId) => #failure(#ErrInsufficientFunds) ... </steps>
             <accounts>
               <account>
                 <account-name> ActName </account-name>
@@ -330,15 +341,15 @@ Check Frozen
             </accounts>
             ...
           </shard>
-        requires #getBalance(BALS, TokId) <Int Val      [label(insufficient-balance)] // >
+        requires #getBalance(BALS, TokId) <Int 0      [label(insufficient-balance)] // >
 
      rule <shard>
-            <steps> #checkBalance(_, _, _) => #failure(#ErrUnknownAccount) ... </steps>
+            <steps> #checkBalance(_, _) => #failure(#ErrUnknownAccount) ... </steps>
             ...
           </shard> [label(checkBalance-unknown-account), priority(160)]
 ```
 
-### Payable check
+# Payable check
 
 ```k
      syntax TxStep ::= "#checkPayable"
@@ -373,13 +384,16 @@ Check Frozen
   
 ```
 
-### Update balance
+# Update balance
+
+Update a user's balance, and then check the result: [Go to implementation](https://github.com/multiversx/mx-chain-vm-common-go/blob/755643b6f3982d2deb61782fffc492037f1aeb24/builtInFunctions/esdtTransfer.go#L256)
 
 ```k
      syntax TxStep ::= #updateBalance(AccountName, TokenId, Int)
     // ---------------------------------------------------------------
      rule <shard>
-            <steps> #updateBalance(ActName, TokId, Val) => . ... </steps>
+            <steps> #updateBalance(ActName, TokId, Val) 
+                 => #checkBalance(ActName, TokId) ... </steps>
             <accounts>
               <account>
                 <account-name> ActName </account-name>

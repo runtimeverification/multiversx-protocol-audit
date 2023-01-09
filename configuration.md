@@ -2,8 +2,8 @@
 Configuration has two main components: 
 
 * Metachain (`<meta/>`): stores global token information and
-processes token management operations, which are implemented in the ESDT system smart contract.
-* Shards (`<shards/>`): stores account data and token settings.
+processes token management operations, which are implemented in the ESDT system smart contract. It stores the token metadata such as token owners, properties, paused/limited flags, and roles.
+* Shards (`<shards/>`): stores account data and local token settings.
 
 ```k
 requires "esdt-syntax.md"
