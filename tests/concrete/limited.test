@@ -17,8 +17,8 @@ addShard(3)
 addShard(4)
 addShard(5)
 addShard(6)
-addAccount(1, "A1", false)
-addAccount(2, "A2", false)
+addAccount(1, "A1", false, false)
+addAccount(2, "A2", false, false)
 
 addUserTx( 
     issue( addr(1, "A1"), 1, 100 )

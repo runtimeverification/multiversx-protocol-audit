@@ -8,7 +8,7 @@ module TESTER-SYNTAX
     
     syntax Stmt ::= "#wait"
                   | addShard(ShardId)
-                  | addAccount(ShardId, AccountName, Bool)
+                  | addAccount(ShardId, AccountName, Bool, Bool)
                   | addUserTx(Transaction)
                   | setBalance(AccountAddr, TokenId, Int)
                   | assert(String, Exp)                             [strict(2)]
@@ -93,12 +93,13 @@ module TESTER
 
 
     rule 
-      <k> addAccount(ShrId, ActName, IsSc) => . ... </k>
+      <k> addAccount(ShrId, ActName, IsSc, Payable) => . ... </k>
       <shard> 
         <shard-id> ShrId </shard-id>
         <accounts> (.Bag => <account>
             <account-name> ActName </account-name>
             <is-sc> IsSc </is-sc>
+            <payable> Payable </payable>
             <esdt-balances> .BalMap </esdt-balances>
             <esdt-roles> .SetMap </esdt-roles>
           </account>) 
@@ -127,7 +128,7 @@ module TESTER
         <accounts> 
           <account>
             <account-name> ActName </account-name>
-            <esdt-balances> BALS => BALS [TokId <- Val] </esdt-balances>
+            <esdt-balances> BALS => BALS [TokId <- i(Val)] </esdt-balances>
             ...
           </account>
           ...

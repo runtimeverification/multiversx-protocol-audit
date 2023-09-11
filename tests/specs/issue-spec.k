@@ -25,7 +25,7 @@ module ISSUE-SPEC
           <accounts>
             <account>
               <account-name> A1 </account-name>
-              <esdt-balances> BALS => BALS [ TokId <- Supply ] /* > */ </esdt-balances>
+              <esdt-balances> BALS => BALS [ TokId <- i(Supply) ] /* > */ </esdt-balances>
               ...
             </account>
             ...

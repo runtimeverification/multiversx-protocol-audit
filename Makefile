@@ -7,7 +7,7 @@ PROFILE :=
 
 esdt-sources := esdt.md esdt-syntax.md \
 				configuration.md containers.md errors.md \
-				helpers.md transfer.md  
+				helpers.md transfer.md builtin-functions.md 
 
 all: build
 

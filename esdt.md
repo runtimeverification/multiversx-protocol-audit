@@ -25,15 +25,16 @@ module ESDT
 
 ```
 
-## Main Loop
+# Main Loop
 
-Execute one of these steps:
+Choose one of these steps nondeterministically:
 
-* Execute a user action
-* Execute an incoming transaction
-* next block (?)
+* Execute a user action from `<user-txs>`
+* Execute an incoming transaction from `<incoming-txs>`
 
-### Execute a user action
+## Execute a user action
+
+The `<user-txs>` cell contains the transactions created by users in this shard. Pop the first transaction in the queue and set as `<current-tx>`.
 
 ```k
      rule <is-running> #no => ShrId </is-running>
@@ -46,7 +47,9 @@ Execute one of these steps:
           </shard>  [label(take-user-action)]
 ```
 
-### Execute an incoming transaction
+## Execute an incoming transaction
+
+The `<incoming-txs>` cell contains the transactions sent from other shards (or Metachain). Since there are multiple queues in this cell, one of these queues are chosen nondeterministically.
 
 ```k
      rule <is-running> #no => ShrId </is-running>
@@ -61,15 +64,24 @@ Execute one of these steps:
             <current-tx> #nullTx => Tx </current-tx>
             ...
           </shard> [label(take-incoming-tx)]
-
-     rule <steps> #nullTx => . ... </steps>
-
 ```
 
+For example, suppose this is the initial content of the `<incoming-txs>` cell:
 
-## Finalize transaction
+```
+<incoming-txs>
+  ShardA M|-> TxL( TxA1 ) TxL( TxA2 )
+  ShardB M|-> TxL( TxB1 ) TxL( TxB2 ) TxL( TxB3 ) 
+<incoming-txs>
+```
 
-Log the successful transaction:
+There are 5 transactions in total: 2 from Shard A and 3 from Shard B. One of `TxA1` or `TxB2` is chosen randomly.
+
+See [ESDT Management Functions](#esdt-management-functions) section or [Builtin Functions](./builtin-functions.md) module for execution of transactions.
+
+# Finalize transaction
+
+After successfully executing the transaction add a log entry:
 
 ```k
      rule <shard> 
@@ -80,6 +92,10 @@ Log the successful transaction:
           </shard>
           [label(finalize-success-log)]
 ```
+
+## Sending output transactions
+
+If there are transactions created during the execution, send those transactions. Sending a transaction means `push`ing the transaction to the `<incoming-txs>` of the destination shard with the current shard ID. The `MQueue` data structure maintains multiple queues to separate transactions coming from different shards.
 
 Send messages to destination shards:
 
@@ -114,6 +130,16 @@ Send messages to Metachain:
           [label(relay-to-meta)]
 ```
 
+The following cases require sending internal transactions:
+
+1. Cross shard transfer successfully executed in the sender's shard: [rules](./transfer.md#process-destination)
+1. Cross shard transaction failed in the receiver's shard: [rules](#error-handling)
+1. Forwarding `ESDTManage` to Metachain: [rules](#esdt-management-functions)
+1. Metachain sends `BuiltinCall`s to shards as a result of executing `ESDTManage` on Metachain.
+
+
+## Cleanup
+
 Cleanup when there is no outgoing transaction.
 
 ```k
@@ -129,13 +155,16 @@ Cleanup when there is no outgoing transaction.
           [label(finalize-cleanup)]
 ```
 
+# Error handling
 
+If a transaction fails at some step, the remaining steps are not executed and the state is reverted. When a transaction fails, It leaves a `#failure(_)` on top of the `<steps>` cell. The following rule skips the rest of the execution steps if there is a failure:
 
-### Error handling
+```k
+    rule <steps> #failure(_) ~> (T:TxStep => .) ... </steps> 
+      requires T =/=K #finalizeTransaction    [label(failure-skip-rest)] 
+```
 
-Restore to snapshot
-If `Tx` is a cross shard transaction and this shard is the destination, create a transaction using `#mkReturnTx` 
-to revert the state in the sender's shard. For example, to return the tokens to the sender in cross shard transfers.
+After skipping the remaining execution steps, the `<accounts>` cell is restored to the snapshot. If `Tx` is a cross shard transaction and this shard is the destination, the sender's shard needs to be informed about the failure. Hence, a transaction is created using `#mkReturnTx` to revert the state in the sender's shard. For example, to return tokens to the sender in cross shard transfers.
 
 ```k
      rule <shard> 
@@ -145,18 +174,23 @@ to revert the state in the sender's shard. For example, to return the tokens to 
             <snapshot> ACTS </snapshot>
             (_:AccountsCell => ACTS)
             <logs> L => (L ; #failure(Err) ; Tx ) </logs>
-            <out-txs> Txs => 
-              #if (#isCrossShard(Tx) andBool #txDestShard(Tx) ==Shard ShrId)
-              #then Txs TxL(#mkReturnTx(Tx))
-              #else Txs #fi            
-            </out-txs>
+            <out-txs> Txs => Txs TxL(#mkReturnTx(Tx)) </out-txs>
             ...
           </shard>
-          [label(finalize-failure-log-revert)]
+          requires #isCrossShard(Tx) andBool (#txDestShard(Tx) ==Shard ShrId)
+          [label(finalize-failure-log-revert-cross)]
 
-     rule <steps> #failure(_) ~> (T:TxStep => .) ... </steps> requires T =/=K #finalizeTransaction    [label(failure-skip-rest)] 
+     rule <shard>
+            <steps> (#failure(Err) => .) ~> #finalizeTransaction </steps>
+            <current-tx> Tx </current-tx>
+            <snapshot> ACTS </snapshot>
+            (_:AccountsCell => ACTS)
+            <logs> L => (L ; #failure(Err) ; Tx ) </logs>
+            ...
+          </shard>
+          [label(finalize-failure-log-revert), priority(160)]
     
-     syntax Transaction ::= #mkReturnTx(Transaction)       [function, functional]
+     syntax Transaction ::= #mkReturnTx(Transaction)       [function, total]
   // ------------------------------------------------------------------------------------
      rule #mkReturnTx(transfer(Sender, Dest, TokId, Val, _)) => transfer(Dest, Sender, TokId, Val, true)
      rule #mkReturnTx(#nullTx) => #nullTx
@@ -164,13 +198,14 @@ to revert the state in the sender's shard. For example, to return the tokens to 
      rule #mkReturnTx(doFreeze(_,_,_)) => #nullTx
      rule #mkReturnTx(setGlobalSetting(_,_,_,_))  => #nullTx
      rule #mkReturnTx(setESDTRole(_,_,_, _))  => #nullTx
+     rule #mkReturnTx(localMint(_,_,_))       => #nullTx
+     rule #mkReturnTx(localBurn(_,_,_))       => #nullTx
      
 ```
 
-## ESDT Management Functions
+# ESDT Management Functions
 
-
-Send ESDT management operations to the system SC on Metachain
+ESDT Management functions are SC calls to the ESDT system smart contract. When a shard receives an `ESDTManage` transaction, it forwards the transaction to the Metachain. 
 
 ```k
      rule <shard>
@@ -194,12 +229,13 @@ Send ESDT management operations to the system SC on Metachain
           <is-running> #no => #metachainShardId </is-running>
           [label(meta-take-incoming-tx)]
 ```
+## Issue fungible tokens
 
+[Go to implementation](https://github.com/multiversx/mx-chain-go/blob/bcca886ce2ee9eb5fec9e1dddef1143fc6f6593e/vm/systemSmartContracts/esdt.go#L293)
 
-### Issue fungible tokens
+Create new token and send initial supply to the token owner. Check if `Supply` is non-negative and `TokId` is unique.
 
 ```k
-
      rule <meta-steps> issue(Owner, TokId, Supply) Props => #createToken(Owner, TokId, Props)
                                                          ~> #sendInitialSupply(Owner, TokId, Supply)
                                                          ~> #finalizeTransaction
@@ -209,7 +245,7 @@ Send ESDT management operations to the system SC on Metachain
            andBool notBool( TokId in( #tokenIds(GTS) ) )
            [label(start-issue-at-meta)]
 
-     syntax Set ::= #tokenIds(GlobalTokenSettingsCell)         [function, functional]
+     syntax Set ::= #tokenIds(GlobalTokenSettingsCell)         [function, total]
      rule #tokenIds(<global-token-settings> .Bag </global-token-settings> ) => .Set
      rule #tokenIds(<global-token-settings> 
                       <global-token-setting>
@@ -217,7 +253,11 @@ Send ESDT management operations to the system SC on Metachain
                         _
                       </global-token-setting> REST 
                     </global-token-settings> ) => SetItem(TokId) #tokenIds(<global-token-settings> REST </global-token-settings>)
-    
+```
+
+Create new token save token settings. ([Go to implementation](https://github.com/multiversx/mx-chain-go/blob/bcca886ce2ee9eb5fec9e1dddef1143fc6f6593e/vm/systemSmartContracts/esdt.go#L636))
+
+```k
      syntax KItem ::= "#createToken" "(" AccountAddr "," TokenId "," Properties ")"
   // ----------------------------------------------------------------------
      rule <meta-steps> #createToken(Owner, TokId, Props) => . ... </meta-steps>
@@ -226,7 +266,7 @@ Send ESDT management operations to the system SC on Metachain
             ...
           </global-token-settings>
 
-     syntax GlobalTokenSettingCell ::= #mkGlobalTokenSetting(AccountAddr, TokenId, Properties)      [function, functional]
+     syntax GlobalTokenSettingCell ::= #mkGlobalTokenSetting(AccountAddr, TokenId, Properties)      [function, total]
   // -----------------------------------------------------------------------------------------  
      rule #mkGlobalTokenSetting(Owner, TokId, Props) => 
             <global-token-setting>
@@ -239,7 +279,7 @@ Send ESDT management operations to the system SC on Metachain
             </global-token-setting>
 ```
 
-Send the initial supply to the token owner using the `transfer` function.
+Create a `transfer` to send the initial supply to the token owner. ([Go to implementation](https://github.com/multiversx/mx-chain-go/blob/bcca886ce2ee9eb5fec9e1dddef1143fc6f6593e/vm/systemSmartContracts/esdt.go#L342))
 
 ```k
      syntax KItem ::= #sendInitialSupply(AccountAddr, TokenId, Int)
@@ -248,9 +288,9 @@ Send the initial supply to the token owner using the `transfer` function.
           <meta-out-txs> ... (.TxList => TxL(transfer(#systemAct, Owner, TokId, Supply, false))) </meta-out-txs>
 ```
 
-### Freeze/Unfreeze
+## Freeze/Unfreeze
 
-At Metachain, check the ownership and token properties. Then, call the builtin function `doFreeze` at the destination account's shard.
+At Metachain, check the ownership and token properties. Then, call the builtin function `doFreeze` at the destination account's shard. ([Go to implementation](https://github.com/multiversx/mx-chain-go/blob/bcca886ce2ee9eb5fec9e1dddef1143fc6f6593e/vm/systemSmartContracts/esdt.go#L934))
 
 ```k
 
@@ -270,9 +310,9 @@ At Metachain, check the ownership and token properties. Then, call the builtin f
           [label(freeze-at-meta)]
 ```
 
-### Set special role
+## Set/Unset special role
 
-At Metachain, check the ownership and token properties. Then, call the builtin function `setESDTRole` at the destination account's shard.
+At Metachain, check the ownership and token properties. Then, make a call to the builtin function `setESDTRole` at the destination account's shard. `Caller` must be the owner of the token, and the token must have the `canAddSpecialRoles` property. ([Go to `setSpecialRole` implementation](https://github.com/multiversx/mx-chain-go/blob/bcca886ce2ee9eb5fec9e1dddef1143fc6f6593e/vm/systemSmartContracts/esdt.go#L1735), [Go to `unSetSpecialRole` implementation](https://github.com/multiversx/mx-chain-go/blob/bcca886ce2ee9eb5fec9e1dddef1143fc6f6593e/vm/systemSmartContracts/esdt.go#L1793))
 
 ```k
 
@@ -297,7 +337,7 @@ At Metachain, check the ownership and token properties. Then, call the builtin f
           [label(set-special-role-meta)]
 ```
 
-First transfer role set, send limited global setting to all shards.
+If this is the first transfer role set, make the token `limited`. ([Go to implementation](https://github.com/multiversx/mx-chain-go/blob/bcca886ce2ee9eb5fec9e1dddef1143fc6f6593e/vm/systemSmartContracts/esdt.go#L1723)) Send the global setting to all shards using `setGlobalSetting` builtin call.
     
 ```k
     syntax KItem ::= checkLimited(TokenId, ESDTRole, Bool, SetMap)
@@ -317,7 +357,7 @@ First transfer role set, send limited global setting to all shards.
       requires getSetItem(OldRoles, ESDTRoleTransfer) ==K .Set
 ```
 
-Last transfer role removed
+When the last transfer role removed, make the token un`limited`. Send the global setting to all shards using `setGlobalSetting` builtin call. ([Go to implementation](https://github.com/multiversx/mx-chain-go/blob/bcca886ce2ee9eb5fec9e1dddef1143fc6f6593e/vm/systemSmartContracts/esdt.go#L1849))
 
 ```k
     rule
@@ -342,9 +382,9 @@ Last transfer role removed
 
 ```
 
-### Pause/Unpause
+## Pause/Unpause
 
-At Metachain, check the ownership and token properties. Then, call the builtin function `freeze` at the destination account's shard.
+At Metachain, check the ownership and token properties. Then, call the builtin function `freeze` at the destination account's shard. ([Go to implementation](https://github.com/multiversx/mx-chain-go/blob/bcca886ce2ee9eb5fec9e1dddef1143fc6f6593e/vm/systemSmartContracts/esdt.go#L1073))
 
 ```k
 
@@ -385,7 +425,7 @@ At Metachain, check the ownership and token properties. Then, call the builtin f
 
 ```
 
-### Upgrade properties
+## Upgrade properties
 
 ```k
 
@@ -404,7 +444,7 @@ At Metachain, check the ownership and token properties. Then, call the builtin f
           [label(controlChanges-at-meta)]
 ```
 
-### Send messages from Metachain to shards:
+## Send messages from Metachain to shards:
 
 ```k
      rule <meta-steps> #finalizeTransaction </meta-steps>
