@@ -1,4 +1,118 @@
-## Case 1
+## Intra shard
+
+```rust
+shard 1 {
+  sc A {
+    method methodA {
+      compute("A")
+      async(B, methodB, cbAB)
+      compute("A done")
+    }
+
+    callback cbAB { 
+      compute("callback B->A")
+    }
+
+  }
+
+  sc B {
+    method methodB {
+      compute("B")
+    }
+  }
+}
+```
+
+User calls SC A
+
+```mermaid
+sequenceDiagram
+  
+  User ->> SC A: call(A, methodA)
+  SC A ->>+ SC A: runSCCall(User->A, methodA)
+
+  SC A ->> SC A: compute("A")
+  
+  SC A ->> SC A: newAsyncCall(A->B, methodB, cbAB)
+  note right of SC A: registered an async call
+
+  SC A ->> SC A: compute("A done")
+  
+  note over SC A, SC B: execute the async call and cb locally
+
+  SC A ->>+ SC B: execOnDestCtx(A->B, methodB)
+  SC B ->> SC B: compute("B")
+  SC B ->>- SC A: VMOutput
+
+  SC A ->>+ SC A: execOnDestCtx(B->A, cbAB)
+  SC A ->> SC A: compute("callback B->A")
+  SC A ->>- SC A: callback VMOutput
+
+  SC A ->>- SC A: done
+```
+
+## Multi-level Intra shard
+
+```rust
+shard 1 {
+  sc A {
+    method methodA {
+      setStorage("my_int", 1)
+      async(B, methodB, cbAB)
+    }
+
+    callback cbAB(res) { 
+      match res {
+        Ok => compute("done");
+        Err => compute("failed")
+    }
+
+  }
+
+  sc B {
+    method methodB {
+      async(B, methodB)
+    }
+  }
+
+  sc C {
+    method methodB { }
+  }
+}
+```
+
+User calls SC A
+
+```mermaid
+sequenceDiagram
+  participant User
+  participant SC A
+  participant SC B
+  
+  User ->> SC A: call(A, methodA)
+  SC A ->>+ SC A: runSCCall(User->A, methodA)
+
+  SC A ->> SC A: setStorage("x", 1)
+  
+  SC A ->> SC A: newAsyncCall(A->B, methodB, cbAB)
+  note right of SC A: registered an async call
+  
+  note over SC A, SC B: execute the async call and cb locally
+
+  SC A ->>+ SC B: execOnDestCtx(A->B, methodB)
+  SC B ->> SC B: newAsyncCall(B->C, methodC) REJECT!!!
+  SC B ->>- SC A: VMOutput with error
+
+  SC A ->>+ SC A: execOnDestCtx(B->A, cbAB)
+  SC A ->> SC A: compute("failed")
+  SC A ->>- SC A: callback VMOutput
+
+  SC A ->>- SC A: done
+
+  note over SC A, SC B: my_int == 1, changes in methodA are not reverted
+```
+
+## Intra and cross shard
 
 ```
 shard 1 {
@@ -30,16 +144,8 @@ shard 2 {
   sc B {
     method methodB {
       compute("B")
-      execOnDestCtx(D, methodD)
-      compute("B done")
     }
   }
-  sc D {
-    method methodD {
-      compute("D")
-    }
-  }
-  
 }
 ```
 
@@ -79,10 +185,6 @@ sequenceDiagram
   Shard2 ->>+ Shard2: runSCCall(A->B, methodB)
 
   Shard2 ->> Shard2: compute("B")
-  Shard2 ->>+ Shard2: execOnDestCtx(B->D, methodD)
-  Shard2 ->>- Shard2: compute("D")
-
-  Shard2 ->> Shard2: compute("B done")
 
   Shard2 ->>- Metachain:  SCR()
   Metachain ->> Shard1: SCR()
@@ -92,70 +194,3 @@ sequenceDiagram
   Shard1 ->>- Shard1: notifyParent
 ```
 
-
-## Case 2
-
-```
-shard 1 {
-  sc A {
-    method methodA {
-      compute("A1")
-      execOnDestCtx(B, methodB)
-      compute("A2")
-    }
-  }
-
-  sc B {
-    method methodB {
-      compute("B1")
-      async(C, methodC, cbB)
-      compute("B2")
-    }
-
-    callback cbB {
-      compute("callback")
-    }
-  }
-
-  sc C {
-    method methodC {
-      compute("C")
-    }
-  }
-  
-}
-```
-
-```
-A1 > B1 > register async > B2 > C > callback > A2
-```
-
-```mermaid
-sequenceDiagram
-
-  User ->> SC A: call(A, methodA)
-  SC A ->>+ SC A: runSCCall(User->A, methodA)
-
-  SC A ->> SC A: compute("A1")
-  SC A ->>+ SC B: execOnDestCtx(<br/>A->B, methodB)
-  SC B ->> SC B: compute("B1")
-  
-  
-  SC B ->> SC B: newAsyncCall(B->C, methodC, cbB)
-  SC B ->> SC B: compute("B2")
-  
-  SC B ->>+ SC C: execOnDestCtx(<br/>B->C, methodC)
-  SC C ->> SC C : compute("C")
-  SC C ->>- SC B : vmOutput
-
-  SC B ->>+ SC B: execOnDestCtx(C->B, cbB)
-  SC B ->> SC B: compute("callback")
-  SC B ->>- SC B: vmOutput
-
-  SC B ->>- SC A: vmOutput
-
-
-  SC A ->> SC A: compute("A2")
-
-  SC A ->>- SC A: vmOutput
-```
