@@ -21,7 +21,7 @@ jobs:
         uses: actions/checkout@v3
       - name: Run Tests
         run: |
-          make test-concrete
+          make -C esdt test-concrete
 
   esdt-test-prove:
     name: ESDT Prove 
@@ -33,4 +33,4 @@ jobs:
         uses: actions/checkout@v3
       - name: Run Prove
         run: |
-          make test-prove
+          make -C esdt test-prove

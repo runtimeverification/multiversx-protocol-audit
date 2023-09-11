@@ -2,9 +2,9 @@
 .kprove*
 .krun*
 
-esdt-kompiled
-verification-kompiled
-tester-kompiled
+*-kompiled
+*-kompiled
+*-kompiled
 kore-exec.tar.gz
 
 .sessionCommands
