@@ -92,7 +92,7 @@ sequenceDiagram
   User ->> SC A: call(A, methodA)
   SC A ->>+ SC A: runSCCall(User->A, methodA)
 
-  SC A ->> SC A: setStorage("x", 1)
+  SC A ->> SC A: setStorage("my_int", 1)
   
   SC A ->> SC A: newAsyncCall(A->B, methodB, cbAB)
   note right of SC A: registered an async call
