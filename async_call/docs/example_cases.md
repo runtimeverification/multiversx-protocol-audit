@@ -22,8 +22,7 @@ shard 1 {
   }
 }
 ```
-
-User calls SC A
+Smart contracts `A` and `B` lives in `Shard1`. A user calls `A.methodA`. Inside `methodA`, `A` does some computations and registers an async call. Since `A` and `B` are in the same shard, after `methodA`, the async call and its callback are executed synchronously using `ExecuteOnDestinationContext`.  
 
 ```mermaid
 sequenceDiagram
@@ -65,6 +64,7 @@ shard 1 {
       match res {
         Ok => compute("done");
         Err => compute("failed")
+      }
     }
 
   }
@@ -81,7 +81,7 @@ shard 1 {
 }
 ```
 
-User calls SC A
+A user calls `A.methodA`. Contract `A` writes to its storage, and calls `B.methodB` asynchronously with the callback method callback `cbAB`. Then, B attempts to create a new async call but it is rejected because multi level async calls are not permitted. The callback `cbAB` is executed with a failure result, thus the `Err` branch is chosen. Storage updates done in `A.methodA` are not automatically reverted.
 
 ```mermaid
 sequenceDiagram
@@ -149,7 +149,7 @@ shard 2 {
 }
 ```
 
-User calls SC A
+A user calls `A.methodA`. Inside `methodA`, two async calls are created. After `methodA`, the async call to `C.methodC` and its callback `cbAC` are executed locally since `A` and `C` are in the same shard. Then, an output transfer for the async call to `B` is sent to `Shard2` via Metachain. `Shard2` executes the call and sends a smart contract result to `Shard1`. Once `Shard1` receives the result, it executes `cbAB` and the root call is logically completed.
 
 ```mermaid
 sequenceDiagram
