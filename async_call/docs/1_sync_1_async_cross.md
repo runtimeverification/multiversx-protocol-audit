@@ -24,10 +24,11 @@ shard S1 {
     }
     fn callback(res) {
       inc_storage()
-      compute("C1.cb")
     }
   }
+}
 
+shard S2 {
   trait C2 {
     storage = 0
     fn endpoint() {
@@ -38,7 +39,7 @@ shard S1 {
 ```
 
 ```
-User -> C0 -sync-> C1 -async-> C2 -> C1.callback -> C0.remaining
+User -> C0 -sync-> C1 -> C0.remaining ~~> C2 ~~> C1.callback
 ```
 
 Final storage after successful eecution:
@@ -76,10 +77,11 @@ shard S1 {
 
     fn callback(res) {
       inc_storage()
-      compute("C1.cb")
     }
   }
+}
 
+shard S2 {
   trait C2 {
     storage = 0
     fn endpoint() {
@@ -91,7 +93,6 @@ shard S1 {
 }
 
 ```
-
 
 
 ```mermaid
@@ -114,35 +115,37 @@ sequenceDiagram
   C1 ->> C1: inc_storage()
 
   note over C1: storage: C1 = 2
-
-  C1 ->>+ C2: execOnDestCtx(C1 -> C2)
-  C2 ->> C2: inc_storage()
-  note over C2: storage: C2 = 1
-  
-  C2 ->>- C2: throw_error()
-  note over C2: rollback C2's state
-  note over C0, C2: storage: C0 = 1, C1 = 2, C2 = 0
-  C2 ->> C1: VMOutput
-
-  C1 ->>+ C1: execOnDestCtx(C2 -> C1, callback)
-  C1 ->> C1: inc_storage()
-  note over C1: storage: C1 = 3
-  C1 ->> C1: compute(C1.cb)
-  C1 ->>- C1: CbVMOutput
   
   C1 ->>- C0: VMOutput
   C0 ->> C0: inc_storage()
   note over C0: storage: C0 = 2
   
-  C0 ->>- C0: complete
+  note over C0, C2: storage: C0 = 2, C1 = 2, C2 = 0
+
+  C0 ->>- C0: runtime completion
+  C0 ->>+ C2: OutputTransfer via Metachain
+  C2 ->> C2: inc_storage()
+  note over C2: storage: C2 = 1
+  
+  C2 ->>- C2: throw_error()
+  note over C2: rollback C2's state
+  note over C0, C2: storage: C0 = 2, C1 = 2, C2 = 0
+  C2 ->> C1: SCR via Metachain
+  
+  C1 ->>+ C1: execute callback
+  C1 ->> C1: inc_storage()
+  note over C1: storage: C1 = 3
+
+  C1 ->>- C0: notify parent
   note over C0, C2: storage: C0 = 2, C1 = 3, C2 = 0
+  
+   
 ```
 
 ### The callback fails
 
 
 ```rust
-
 shard S1 {
 
   trait C0 {
@@ -167,7 +170,9 @@ shard S1 {
       throw_error()
     }
   }
+}
 
+shard S2 {
   trait C2 {
     storage = 0
     fn endpoint() {
@@ -178,7 +183,6 @@ shard S1 {
 }
 
 ```
-
 
 
 ```mermaid
@@ -201,27 +205,30 @@ sequenceDiagram
   C1 ->> C1: inc_storage()
 
   note over C1: storage: C1 = 2
-
-  C1 ->>+ C2: execOnDestCtx(C1 -> C2)
-  C2 ->> C2: inc_storage()
-  note over C2: storage: C2 = 1
-  C2 ->>- C1: VMOutput
-
-  C1 ->>+ C1: execOnDestCtx(C2 -> C1, callback)
-  C1 ->> C1: inc_storage()
-  note over C1: storage: C1 = 3
-  C1 ->>- C1: throw_error()
-  note over C1: rollback C1's state to pre-callback
-  note over C0, C2: storage: C0 = 1, C1 = 2, C2 = 1
-
-  C1 ->> C1: CbVMOutput
   
   C1 ->>- C0: VMOutput
   C0 ->> C0: inc_storage()
   note over C0: storage: C0 = 2
   
-  C0 ->>- C0: complete
+  note over C0, C2: storage: C0 = 2, C1 = 2, C2 = 0
+
+  C0 ->>- C0: runtime completion
+  C0 ->>+ C2: OutputTransfer via Metachain
+  C2 ->> C2: inc_storage()
+  note over C2: storage: C2 = 1
+  
+  C2 ->>- C1: SCR via Metachain
   note over C0, C2: storage: C0 = 2, C1 = 2, C2 = 1
+  
+  C1 ->>+ C1: callback()
+  C1 ->> C1: inc_storage()
+  note over C1: storage: C1 = 3
+  C1 ->>- C1: throw_error()
+  note over C1: rollback to pre-callback state
+  note over C0, C2: storage: C0 = 2, C1 = 2, C2 = 1
+  
+  C1 ->> C0: notify parent
+   
 ```
 
 ### The root call fails after sync call
@@ -253,7 +260,9 @@ shard S1 {
       inc_storage()
     }
   }
+}
 
+shard S2 {
   trait C2 {
     storage = 0
     fn endpoint() {
@@ -287,25 +296,15 @@ sequenceDiagram
   C1 ->> C1: inc_storage()
 
   note over C1: storage: C1 = 2
-
-  C1 ->>+ C2: execOnDestCtx(C1 -> C2)
-  C2 ->> C2: inc_storage()
-  note over C2: storage: C2 = 1
-  C2 ->>- C1: VMOutput
-
-  C1 ->>+ C1: execOnDestCtx(C2 -> C1, callback)
-  C1 ->> C1: inc_storage()
-  note over C1: storage: C1 = 3
-  
-  C1 ->>- C1: CbVMOutput
   
   C1 ->>- C0: VMOutput
+
   C0 ->> C0: inc_storage()
   note over C0: storage: C0 = 2
 
-
   C0 ->>- C0: throw_error()
   note over C0, C2: rollback everything to the initial state
+  
   
   note over C0, C2: storage: C0 = 0, C1 = 0, C2 = 0
 ```
