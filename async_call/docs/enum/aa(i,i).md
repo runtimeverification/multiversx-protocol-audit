@@ -65,4 +65,4 @@ sequenceDiagram
 
 ## Failure cases
 
-Errors in one async call does not affect the other async call. An error in C2 doesn't cancel the async call to C3. Errors in async calls are handled independently as in [a_i.md](a_i.md).
+Errors in one async call does not affect the other async call. An error in C2 doesn't cancel the async call to C3. Errors in async calls are handled independently as in [a(i)](a(i).md).

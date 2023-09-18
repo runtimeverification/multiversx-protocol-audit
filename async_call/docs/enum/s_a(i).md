@@ -53,19 +53,19 @@ sequenceDiagram
 
 ## 2
 
-`C1` fails after the async call registration: async all is cancelled as in [a_i#4](a_i.md#4), and everything is reverted.
+`C1` fails after the async call registration: async all is cancelled as in [a(i)#4](a(i).md#4), and everything is reverted.
 
 ## 3
 
-`C2` fails: The error is handled as in [a_i#2](a_i.md#2). After the callback, `C0` continues to execute.
+`C2` fails: The error is handled as in [a(i)#2](a(i).md#2). After the callback, `C0` continues to execute.
 
 ## 3
 
-The callback fails: The error is handled as in [a_i#3](a_i.md#3). After reverting the callback, `C0` continues to execute.
+The callback fails: The error is handled as in [a(i)#3](a(i).md#3). After reverting the callback, `C0` continues to execute.
 
 ## 4
 
-The callback fails: The error is handled as in [a_i#3](a_i.md#3). After reverting the callback, `C0` continues to execute.
+The callback fails: The error is handled as in [a(i)#3](a(i).md#3). After reverting the callback, `C0` continues to execute.
 
 ## 5
 

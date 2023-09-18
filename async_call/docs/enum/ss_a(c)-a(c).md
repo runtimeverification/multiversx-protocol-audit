@@ -13,32 +13,36 @@ shard Sh1 {
 
   contract C1 {
     fn method1() {
-      async(C3, callback3)
+      async(C3, callback)
       compute("C1.end")
     }
 
-    fn callback3() {
-      compute("C1.cb3")
+    fn callback() {
+      compute("C1.cb")
     }
   }
 
   contract C2 {
     fn method2() {
-      async(C4, callback3)
+      async(C4, callback)
       compute("C2.end")
     }
 
-    fn callback4() {
-      compute("C2.cb4")
+    fn callback() {
+      compute("C2.cb")
     }
   }
+}
 
+shard Sh2 {
   contract C3 {
     fn method3() {
       compute("C3")
     }
   }
+}
 
+shard Sh3 {
   contract C4 {
     fn method4() {
       compute("C4")
@@ -48,9 +52,11 @@ shard Sh1 {
 
 ```
 
-`C0` makes a sync call to `C1`. 
-* `C1`, `C3` and the callback are executed as in [a_i](a_i.md). After the callback, `C0` calls `C2`.
-* `C2`, `C4` and the callback are executed as in [a_i](a_i.md).
+`C0` makes two sync calls to `C1` and `C2`, both registers an async call.
+* After the runtime completion of `C0`, output transfers are sent to the destination shards.
+* `C3` and `C4` run as in [aa(c,c)](aa(c,c).md).
+  * If they are in the same shard, they run sequentially preserving the registration order.
+  * Otherwise, they run in parallel.
 
 If an error occurs in `C0`, `C1` or `C2`, everything is reverted. 
 

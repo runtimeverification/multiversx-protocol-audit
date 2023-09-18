@@ -19,38 +19,40 @@ syntax Shard ::= intra | cross
 
 ### Examples
 
-[a2_c_c](a2_c_c.md): A contract that sends 2 cross-shard async calls
+[aa(i,i)](aa(i,i).md): A contract that sends 2 cross-shard async calls
 
 ```k
-syntax Tree ::= "a2_c_c"      [function]
+syntax Tree ::= "aa(c,c)"      [function]
 rule a2_c_c => async2 cross cross
 ```
 
 All cases without symmetries
 
-1. [x] A I
-1. [x] A C
-1. [x] A2 I I
-1. [x] A2 I C
-1. [x] A2 C C
-1. [x] S (A I)
-1. [x] S (A C)
-1. [x] S (A2 I I)
-1. [x] S (A2 I C)
-1. [x] S (A2 C C)
-1. [x] S2 (A I) (A I)
-1. [ ] S2 (A I) (A C)
-1. [ ] S2 (A I) (A2 I I)
-1. [ ] S2 (A C) (A C)
-1. [ ] S2 (A I) (A2 I C)
-1. [ ] S2 (A C) (A2 I I)
-1. [ ] S2 (A I) (A2 C C)
-1. [ ] S2 (A C) (A2 I C)
-1. [ ] S2 (A2 I I) (A2 I I)
-1. [ ] S2 (A C) (A2 C C)
-1. [ ] S2 (A2 I I) (A2 I C)
-1. [ ] S2 (A2 I I) (A2 C C)
-1. [ ] S2 (A2 I C) (A2 I C)
-1. [ ] S2 (A2 I C) (A2 C C)
-1. [ ] S2 (A2 C C) (A2 C C)
+1. [a(i)](a(i).md)
+2. [a(c)](a(c).md)
+3. [aa(i,i)](aa(i,i).md)
+4. [aa(i,c)](aa(i,c).md)
+5. [aa(c,c)](aa(c,c).md)
+6. [s_a(i)](s_a(i).md)
+7. [s_a(c)](s_a(c).md)
+8. [s_aa(i,i)](s_aa(i,i).md)
+9. [s_aa(i,c)](s_aa(i,c).md)
+10. [s_aa(c,c)](s_aa(c,c).md)
+11. [ss_a(i)-a(i)](ss_a(i)-a(i).md)
+12. [ss_a(i)-a(c)](ss_a(i)-a(c).md)
+13. [ss_a(c)-a(c)](ss_a(c)-a(c).md)
+14. [ss_a(i)-aa(i,i)](ss_a(i)-aa(i,i).md)
+15. [ss_a(i)-aa(i,c)](ss_a(i)-aa(i,c).md)
 
+The following cases are more complex variants of the above.
+
+1. [ss_a(c)-aa(i,i)](ss_a(c)-aa(i,i).md)
+1. [ss_a(i)-aa(c,c)](ss_a(i)-aa(c,c).md)
+1. [ss_a(c)-aa(i,c)](ss_a(c)-aa(i,c).md)
+1. [ss_aa(i,i)-aa(i,i)](ss_aa(i,i)-aa(i,i).md)
+1. [ss_a(c)-aa(c,c)](ss_a(c)-aa(c,c).md)
+1. [ss_aa(i,i)-aa(i,c)](ss_aa(i,i)-aa(i,c).md)
+1. [ss_aa(i,i)-aa(c,c)](ss_aa(i,i)-aa(c,c).md)
+1. [ss_aa(i,c)-aa(i,c)](ss_aa(i,c)-aa(i,c).md)
+1. [ss_aa(i,c)-aa(c,c)](ss_aa(i,c)-aa(c,c).md)
+1. [ss_aa(c,c)-aa(c,c)](ss_aa(c,c)-aa(c,c).md)

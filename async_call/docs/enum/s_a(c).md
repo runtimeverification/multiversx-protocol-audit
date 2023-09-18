@@ -63,4 +63,4 @@ Output transfers are sent after runtime completion of `C0`
 
 ## 3
 
-`C2` or the callback fails: The error is handled as in [a_c#2](a_i.md#2) or [a_c#3](a_i.md#3).
+`C2` or the callback fails: The error is handled as in [a(c)#2](a(i).md#2) or [a(c)#3](a(c).md#3).
