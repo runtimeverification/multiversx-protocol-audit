@@ -53,7 +53,6 @@ The async call fails
 
 shard Sh1 {
   contract C1 {
-    storage = 0
     fn endpoint() {
       async(C2, callback)
     }
@@ -64,7 +63,6 @@ shard Sh1 {
   }
 
   contract C2 {
-    storage = 0
     fn endpoint() {
       compute("C2")
       throw_error()
@@ -111,7 +109,6 @@ The callback fails
 
 shard Sh1 {
   contract C1 {
-    storage = 0
     fn endpoint() {
       async(C2, callback)
     }
@@ -123,7 +120,6 @@ shard Sh1 {
   }
 
   contract C2 {
-    storage = 0
     fn endpoint() {
       compute("C2")
     }
