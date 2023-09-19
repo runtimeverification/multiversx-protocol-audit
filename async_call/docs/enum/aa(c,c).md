@@ -56,56 +56,26 @@ sequenceDiagram
   C2 ->> C2: compute(C2)
   C2 ->>- Shard2: SCR2
 
-  Shard2 ->>+ C3: OutputTransfer(C1 -> C3) 
-  C3 ->> C3: compute(C3)
-  C3 ->>- Shard2: SCR3
-
-  Shard2 ->> C1: SC2, SCR3 via Metachain
-
-  C1 ->>+ C1: execute(C2->C1, callback2)
-  C1 ->> C1: compute(C1.cb2)
-  C1 ->>- C1: notify parent
-
-
-  C1 ->>+ C1: execute(C3->C1, callback3)
-  C1 ->> C1: compute(C1.cb3)
-  C1 ->>- C1: notify parent
-
-  C1 ->> C1: complete
-```
-
-Execution order between `C2` and `C3` is preserved. `Shard2` may send `SCR2` to `Shard1` before executing `C3`.
-
-```mermaid
-sequenceDiagram
-  participant User
-  participant C1
-  participant Shard2
-  participant C2
-  participant C3
-  
-  Shard2 ->>+ C2: OutputTransfer(C1 -> C2) 
-  C2 ->> C2: compute(C2)
-  C2 ->>-  C1: SCR2 via Metachain
-
   par C2 callback
-
-
-  C1 ->>+ C1: execute(C2->C1, callback2)
-  C1 ->> C1: compute(C1.cb2)
-  C1 ->>- C1: notify parent
-
+    Shard2 ->> C1: SCR2
+    C1 ->>+ C1: execute(C2->C1, callback2)
+    C1 ->> C1: compute(C1.cb2)
+    C1 ->>- C1: notify parent
   and C3 and its callback
-  Shard2 ->>+ C3: OutputTransfer(C1 -> C3) 
-  C3 ->> C3: compute(C3)
-  C3 ->>- C1: SCR3 via Metachain
-
+    Shard2 ->>+ C3: OutputTransfer(C1 -> C3) 
+    C3 ->> C3: compute(C3)
+    C3 ->>- Shard2: SCR3
+    Shard2 ->> C1: SCR3
+  end
   C1 ->>+ C1: execute(C3->C1, callback3)
   C1 ->> C1: compute(C1.cb3)
   C1 ->>- C1: notify parent
-  end
+
   C1 ->> C1: complete
 ```
+
+Execution order between `C2` and `C3` is preserved, i.e., `C2` is guaranteed to run before `C3`. Similarly, `SCR2` (result of `C2`) always arrives at `C1` before `SCR3`, so `callback2` is executed before `callback3`.
+
 ## 2 async call, both cross shard, different shards
 
 ```rust
