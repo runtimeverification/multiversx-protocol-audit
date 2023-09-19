@@ -16,7 +16,7 @@ shard Sh1 {
   }
 }
 
-shard 2 {
+shard Sh2 {
   contract C2 {
     fn method2() {
       compute("C2")
@@ -67,7 +67,7 @@ shard Sh1 {
   }
 }
 
-shard 2 {
+shard Sh2 {
   contract C2 {
     fn endpoint() {
       compute("C2")
@@ -126,7 +126,7 @@ shard Sh1 {
   }
 }
 
-shard 2 {
+shard Sh2 {
   contract C2 {
     fn endpoint() {
       compute("C2")
