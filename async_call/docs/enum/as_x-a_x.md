@@ -1,5 +1,10 @@
 # Async and sync calls in the same contract
 
+```
+C0 -async-> C2
+ \
+  \-sync--> C1 -async-> C3
+```
 
 ```rust
 contract C0 {

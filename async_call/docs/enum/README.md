@@ -10,21 +10,25 @@ Test cases in this folder aim to cover all possible scenarios with the following
 
 ## Generating possible cases and naming 
 
-```k
-syntax Tree ::= async Shard | async2 Shard Shard 
-              | sync Tree | sync2 Tree Tree
+```haskell
+data Tree = A Shard Tree
+      	  | AA Shard Shard
+      	  | S Tree   	 
+      	  | SS Tree Tree
+-- The following constructors represent making
+-- sync and async calls in the same contract.
+      	  | SA Tree Shard
+      	  | AS Shard Tree  
 
-syntax Shard ::= intra | cross
+data Shard ::= I | C
 ```
+
+* [aa(i,i)](aa(i,i).md): A contract that sends 2 cross-shard async calls
+
+`SA` and `AS` are omitted when enumerating all possible cases for the sake of simplicity.
+Only some special cases with these constructors are examined in the section [SA and SA](#sa-and-as).
 
 ### Examples
-
-[aa(i,i)](aa(i,i).md): A contract that sends 2 cross-shard async calls
-
-```k
-syntax Tree ::= "aa(c,c)"      [function]
-rule a2_c_c => async2 cross cross
-```
 
 All cases without symmetries
 
@@ -57,8 +61,33 @@ The following cases are more complex variants of the above.
 7. `ss_aa(i,c)-aa(c,c)`: similar to `ss_a(c)-aa(c,c)`
 8. `ss_aa(c,c)-aa(c,c)`: similar to `ss_a(c)-aa(c,c)`
 
-## Corner cases
+### SA and AS
 
-Corner cases that are not covered in the above enumeration:
+* `as_x-x`: This case reduces to [a(i)](a(i).md) or [a(c)](a(c).md).
 
-1. [as_a](as_a.md): Async call and sync call in the same contract
+```
+  C0 -async-> C1
+   \
+    \-sync--> C2
+```
+
+* `sa_x-x`: This case reduces to [a(i)](a(i).md) or [a(c)](a(c).md).
+
+```
+  C0 -sync-> C1
+   \
+    \-async--> C2
+```
+
+* [`as_x-a_x`](as_x-a_x.md): Async call and sync call in the same contract
+```
+  C0 -async-> C2
+   \
+    \-sync--> C1 -async-> C3
+```
+
+
+
+## Multi-level async calls
+
+The call tree representation above does not cover call trees with multi-level async calls because it is not allowed in Async Calls V2. Such calls are immediately rejected during registration. An example of this case can be found in [a_a_x](a_a_x.md).
