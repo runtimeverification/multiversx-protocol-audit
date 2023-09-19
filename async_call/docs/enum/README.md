@@ -43,16 +43,22 @@ All cases without symmetries
 13. [ss_a(c)-a(c)](ss_a(c)-a(c).md)
 14. [ss_a(i)-aa(i,i)](ss_a(i)-aa(i,i).md)
 15. [ss_a(i)-aa(i,c)](ss_a(i)-aa(i,c).md)
+16. [ss_a(i)-aa(c,c)](ss_a(i)-aa(c,c).md)
+17. [ss_a(c)-aa(i,i)](ss_a(c)-aa(i,i).md)
 
 The following cases are more complex variants of the above.
 
-1. [ss_a(c)-aa(i,i)](ss_a(c)-aa(i,i).md)
-1. [ss_a(i)-aa(c,c)](ss_a(i)-aa(c,c).md)
-1. [ss_a(c)-aa(i,c)](ss_a(c)-aa(i,c).md)
-1. [ss_aa(i,i)-aa(i,i)](ss_aa(i,i)-aa(i,i).md)
-1. [ss_a(c)-aa(c,c)](ss_a(c)-aa(c,c).md)
-1. [ss_aa(i,i)-aa(i,c)](ss_aa(i,i)-aa(i,c).md)
-1. [ss_aa(i,i)-aa(c,c)](ss_aa(i,i)-aa(c,c).md)
-1. [ss_aa(i,c)-aa(i,c)](ss_aa(i,c)-aa(i,c).md)
-1. [ss_aa(i,c)-aa(c,c)](ss_aa(i,c)-aa(c,c).md)
-1. [ss_aa(c,c)-aa(c,c)](ss_aa(c,c)-aa(c,c).md)
+1. `ss_a(c)-aa(i,c)`: similar to [ss_a(c)-aa(i,i)](ss_a(c)-aa(i,i).md) and [ss_a(i)-aa(i,c)](ss_a(i)-aa(i,c).md)  
+2. `ss_a(c)-aa(c,c)`
+3. `ss_aa(i,i)-aa(i,i)`
+4. `ss_aa(i,i)-aa(i,c)`
+5. `ss_aa(i,i)-aa(c,c)`
+6. `ss_aa(i,c)-aa(i,c)`
+7. `ss_aa(i,c)-aa(c,c)`
+8. `ss_aa(c,c)-aa(c,c)`
+
+## Corner cases
+
+Corner cases that are not covered in the above enumeration:
+
+1. [as_a](as_a.md): Async call and sync call in the same contract
