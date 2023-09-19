@@ -49,10 +49,10 @@ All cases without symmetries
 The following cases are more complex variants of the above.
 
 1. `ss_a(c)-aa(i,c)`: similar to [ss_a(c)-aa(i,i)](ss_a(c)-aa(i,i).md) and [ss_a(i)-aa(i,c)](ss_a(i)-aa(i,c).md)  
-2. `ss_a(c)-aa(c,c)`
-3. `ss_aa(i,i)-aa(i,i)`
-4. `ss_aa(i,i)-aa(i,c)`
-5. `ss_aa(i,i)-aa(c,c)`
+2. `ss_a(c)-aa(c,c)`: similar to [ss_a(c)-a(c)](ss_a(c)-a(c).md) with 3 async calls
+3. `ss_aa(i,i)-aa(i,i)`: similar to [ss_a(i)-aa(i,i)](ss_a(i)-aa(i,i).md)
+4. `ss_aa(i,i)-aa(i,c)`: similar to [ss_a(i)-aa(i,c)](ss_a(i)-aa(i,c).md)
+5. `ss_aa(i,i)-aa(c,c)`: similar to [ss_a(i)-aa(c,c)](ss_a(i)-aa(c,c).md)
 6. `ss_aa(i,c)-aa(i,c)`
 7. `ss_aa(i,c)-aa(c,c)`
 8. `ss_aa(c,c)-aa(c,c)`
