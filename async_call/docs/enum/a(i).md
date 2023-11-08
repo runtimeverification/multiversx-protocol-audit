@@ -8,7 +8,7 @@ Successfull case
 shard Sh1 {
   contract C1 {
     fn method1() {
-      async(C2, callback)
+      async(C2, method2, callback)
       compute("C1.end")
     }
 
@@ -31,7 +31,7 @@ shard Sh1 {
 ```mermaid
 sequenceDiagram
   User ->>+ C1: call
-  C1 ->> C1: register async(C2, C1.callback)
+  C1 ->> C1: register async(C2, method2, callback)
   C1 ->>- C1: compute(C1.end)
   
   C1 ->>+ C2: execOnDestCtx(C1 -> C2)
@@ -53,8 +53,8 @@ The async call fails
 
 shard Sh1 {
   contract C1 {
-    fn endpoint() {
-      async(C2, callback)
+    fn method1() {
+      async(C2, method2, callback)
     }
 
     fn callback(res) {
@@ -63,7 +63,7 @@ shard Sh1 {
   }
 
   contract C2 {
-    fn endpoint() {
+    fn method2() {
       compute("C2")
       throw_error()
     }
@@ -83,7 +83,7 @@ sequenceDiagram
   
   note over C1, C2: state: S0
   User ->>+ C1: call
-  C1 ->>- C1: register async(C2, C1.callback)
+  C1 ->>- C1: register async(C2, method2, callback)
   note over C1, C2: state: S1
   
   C1 ->>+ C2: execOnDestCtx(C1 -> C2)
@@ -109,8 +109,8 @@ The callback fails
 
 shard Sh1 {
   contract C1 {
-    fn endpoint() {
-      async(C2, callback)
+    fn method1() {
+      async(C2, method2, callback)
     }
 
     fn callback(res) {
@@ -120,7 +120,7 @@ shard Sh1 {
   }
 
   contract C2 {
-    fn endpoint() {
+    fn method2() {
       compute("C2")
     }
   }
@@ -135,7 +135,7 @@ sequenceDiagram
   
   note over C1, C2: state: S0
   User ->>+ C1: call
-  C1 ->>- C1: register async(C2, C1.callback)
+  C1 ->>- C1: register async(C2, method2, callback)
   note over C1, C2: state: S1
   
   C1 ->>+ C2: execOnDestCtx(C1 -> C2)

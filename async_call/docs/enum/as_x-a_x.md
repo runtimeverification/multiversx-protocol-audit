@@ -1,16 +1,17 @@
 # Async and sync calls in the same contract
 
-```
-C0 -async-> C2
- \
-  \-sync--> C1 -async-> C3
+```mermaid
+flowchart LR
+    C0 -. async .-> C2
+    C0 -- sync --> C1
+    C2 -. async .-> C3
 ```
 
 ```rust
 contract C0 {
   fn method0() {
-    async(C2, callback)
-    sync(C1)
+    async(C2, method2, callback)
+    sync(C1, method1)
   }
 
   fn callback() { }
@@ -18,7 +19,7 @@ contract C0 {
 
 contract C1 {
   fn method1() {
-    async(C3, callback)
+    async(C3, method3, callback)
   }
 
   fn callback() { }
@@ -29,7 +30,7 @@ contract C2 {
 }
 
 contract C3 {
-  fn method2() { }
+  fn method3() { }
 }
 ```
 

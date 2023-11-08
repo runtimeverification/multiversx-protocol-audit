@@ -6,21 +6,21 @@ C1 -async-> C2 -async-> C3
 
 ```rust
 contract C1 {
-  fn method() {
-    async(C2)
+  fn method1() {
+    async(C2, method2, callback1)
   }
-  fn callback() {}
+  fn callback1() {}
 }
 
 contract C2 {
-  fn method() {
-    async(C3)
+  fn method2() {
+    async(C3, method3, callback2)
   }
-  fn callback() {}
+  fn callback2() {}
 }
 
 contract C3 {
-  fn method() { }
+  fn method3() { }
 }
 ```
 

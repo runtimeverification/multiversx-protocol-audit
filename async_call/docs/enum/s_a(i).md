@@ -5,13 +5,13 @@
 shard Sh1 {
   contract C0 {
     fn method0() {
-      sync(C1)
+      sync(C1, method1)
       compute("C0.end")
     }
   }
   contract C1 {
-    fn endpoint() {
-      async(C2, callback)
+    fn method1() {
+      async(C2, method2, callback)
       compute("C1.end")
     }
 
@@ -34,7 +34,7 @@ shard Sh1 {
 sequenceDiagram
   User ->>+ C0: call
   C0 ->>+ C1: sync call
-  C1 ->> C1: register async(C2, C1.callback)
+  C1 ->> C1: register async(C2, method2, callback)
   C1 ->>- C1: compute(C1.end)
   
   C1 ->>+ C2: execOnDestCtx(C1 -> C2)
@@ -82,7 +82,7 @@ sequenceDiagram
 
   User ->>+ C0: call
   C0 ->>+ C1: sync call
-  C1 ->> C1: register async(C2, C1.callback)
+  C1 ->> C1: register async(C2, method2, callback)
   note over C0, C2: state: S1
 
   C1 ->>+ C2: execOnDestCtx(C1 -> C2)

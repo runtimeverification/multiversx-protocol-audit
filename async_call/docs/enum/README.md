@@ -1,12 +1,15 @@
 
 Test cases in this folder aim to cover all possible scenarios with the following limitations:
 
-* The call graph between contracts forms a tree
+* The call graph between contracts forms a tree.
 * A node in this tree can be one of these:
-  * sync internal node: calls 1 or 2 internal nodes synchronously
-  * async internal node: calls 1 or 2 internal nodes asynchronously
-  * leaf node: doesn't make any sync or async calls
-* Maximum tree depth is 3
+  * sync internal node: calls 1 or 2 internal nodes synchronously.
+  * async internal node: calls 1 or 2 leaf nodes asynchronously. 
+    Async calls can only be made to leaf calls since multi-level async calls are not allowed,
+    and sync calls behave as normal function calls if they do not involve any async calls. 
+  * sync/async internal node: makes 1 sync, 1 async call.
+  * leaf node: doesn't make any sync or async calls.
+* Maximum tree depth is 2.
 
 ## Generating possible cases and naming 
 
@@ -15,18 +18,37 @@ data Tree = A Shard Tree
       	  | AA Shard Shard
       	  | S Tree   	 
       	  | SS Tree Tree
--- The following constructors represent making
--- sync and async calls in the same contract.
       	  | SA Tree Shard
       	  | AS Shard Tree  
 
 data Shard ::= I | C
 ```
 
-* [aa(i,i)](aa(i,i).md): A contract that sends 2 cross-shard async calls
+We name these cases using a textual representation where levels on the tree are separated by underscores (`_`), and siblings by hyphens (`-`). Sync nodes are denoted as "s|ss" followed by an underscore and textual representations of their children separated by hyphens. Async nodes are represented as "a|aa," followed by sharding information in parentheses. For instance, [aa(i,i)](aa(i,i).md) represents a case where a contract initiates 2 intra-shard async calls. In this specific case, the call tree has a depth of 1.
 
-`SA` and `AS` are omitted when enumerating all possible cases for the sake of simplicity.
-Only some special cases with these constructors are examined in the section [SA and SA](#sa-and-as).
+```mermaid
+flowchart LR
+    subgraph Shard1
+    direction LR
+      C1 -. async .-> C2
+      C1 -. async .-> C3
+    end
+```
+
+[aa(i,c)](aa(i,c).md) is the case where the first contract sends 1 intra and 1 cross shard async call.
+
+```mermaid
+flowchart LR
+    subgraph Shard1
+    direction LR
+      C1 -. async .-> C2
+    end
+    subgraph Shard2
+      C1 -. async .-> C3
+    end
+```
+
+The section [SA and SA](#sa-and-as) examines scenarios where synchronous and asynchronous calls are utilized within the same contract, with a depth of 1.
 
 ### Examples
 
@@ -63,29 +85,41 @@ The following cases are more complex variants of the above.
 
 ### SA and AS
 
-* `as_x-x`: This case reduces to [a(i)](a(i).md) or [a(c)](a(c).md).
+This section examines scenarios where sync and async calls are utilized within the same contract, specifically with a depth of 1. In these cases, we utilize a slightly modified textual encoding. Sharding information in asynchronous calls is not considered, and the symbol 'x' is used to denote leaf nodes where there are no calls.
 
-```
-  C0 -async-> C1
-   \
-    \-sync--> C2
+* `as_x-x`: This case reduces to [a(i)](a(i).md) or [a(c)](a(c).md) depending on sharding.
+
+```mermaid
+flowchart LR
+    C1 -. async .-> C2
+    C1 -- sync --> C3
 ```
 
 * `sa_x-x`: This case reduces to [a(i)](a(i).md) or [a(c)](a(c).md).
 
-```
-  C0 -sync-> C1
-   \
-    \-async--> C2
+```mermaid
+flowchart LR
+    C1 -- sync --> C2
+    C1 -. async .-> C3
 ```
 
 * [`as_x-a_x`](as_x-a_x.md): Async call and sync call in the same contract
-```
-  C0 -async-> C2
-   \
-    \-sync--> C1 -async-> C3
+
+```mermaid
+flowchart LR
+    C0 -. async .-> C1
+    C0 -- sync --> C2
+    C2 -. async .-> C3
 ```
 
+* [`sa_a-x_x`](sa_a-x_x.md): Async call and sync call in the same contract
+
+```mermaid
+flowchart LR
+    C0 -- sync --> C1
+    C1 -. async .-> C2
+    C0 -. async .-> C3
+```
 
 
 ## Multi-level async calls

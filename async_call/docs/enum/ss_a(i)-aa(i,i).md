@@ -5,15 +5,15 @@
 shard Sh1 {
   contract C0 {
     fn method0() {
-      sync(C1)
-      sync(C2)
+      sync(C1, method1)
+      sync(C2, method2)
       compute("C0.end")
     }
   }
 
   contract C1 {
     fn method1() {
-      async(C3, callback)
+      async(C3, method3, callback)
     }
 
     fn callback() { }
@@ -21,8 +21,8 @@ shard Sh1 {
 
   contract C2 {
     fn method2() {
-      async(C4, callback)
-      async(C5, callback)
+      async(C4, method4, callback)
+      async(C5, method5, callback)
     }
 
     fn callback() { }

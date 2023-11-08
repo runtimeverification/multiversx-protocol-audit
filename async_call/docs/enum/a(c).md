@@ -6,7 +6,7 @@
 shard Sh1 {
   contract C1 {
     fn method1() {
-      async(C2, callback)
+      async(C2, method2, callback)
       compute("C1.end")
     }
 
@@ -36,7 +36,7 @@ sequenceDiagram
   participant C2
   
   User ->>+ C1: call
-  C1 ->> C1: register async(C2, C1.callback)
+  C1 ->> C1: register async(C2, method2, callback)
   C1 ->>- C1: compute(C1.end)
   
   C1 ->>+ C2: OutputTransfer(C1 -> C2)<br/>via Metachain
@@ -57,8 +57,8 @@ sequenceDiagram
 
 shard Sh1 {
   contract C1 {
-    fn endpoint() {
-      async(C2, callback)
+    fn method1() {
+      async(C2, method2, callback)
     }
 
     fn callback(res) {
@@ -69,7 +69,7 @@ shard Sh1 {
 
 shard Sh2 {
   contract C2 {
-    fn endpoint() {
+    fn method2() {
       compute("C2")
       throw_error()
     }
@@ -89,7 +89,7 @@ sequenceDiagram
   participant C2
 
   User ->>+ C1: call
-  C1 ->> C1: register async(C2, C1.callback)
+  C1 ->> C1: register async(C2, method2, callback)
   C1 ->>- C1: compute(C1.end)
   
   note over C2: state: S0
@@ -115,8 +115,8 @@ sequenceDiagram
 
 shard Sh1 {
   contract C1 {
-    fn endpoint() {
-      async(C2, callback)
+    fn method1() {
+      async(C2, method2, callback)
     }
 
     fn callback(res) {
@@ -128,11 +128,10 @@ shard Sh1 {
 
 shard Sh2 {
   contract C2 {
-    fn endpoint() {
+    fn method2() {
       compute("C2")
     }
   }
-  
 }
 
 ```
@@ -148,7 +147,7 @@ sequenceDiagram
   participant C2
 
   User ->>+ C1: call
-  C1 ->> C1: register async(C2, C1.callback)
+  C1 ->> C1: register async(C2, method2, callback)
   C1 ->>- C1: compute(C1.end)
   
   C1 ->>+ C2: OutputTransfer(C1 -> C2)<br/>via Metachain

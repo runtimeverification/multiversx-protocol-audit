@@ -5,8 +5,8 @@
 shard Sh1 {
   contract C1 {
     fn method1() {
-      async(C2, callback2)
-      async(C3, callback3)
+      async(C2, method2, callback2)
+      async(C3, method3, callback3)
       compute("C1.end")
     }
 
@@ -46,8 +46,8 @@ sequenceDiagram
   participant C3
   
   User ->>+ C1: call
-  C1 ->> C1: register async(C2, C1.callback2)
-  C1 ->> C1: register async(C3, C1.callback3)
+  C1 ->> C1: register async(C2, method2, callback2)
+  C1 ->> C1: register async(C3, method3, callback3)
   C1 ->>- C1: compute(C1.end)
   
   C1 ->> Shard2: OutputTransfer(C1 -> C2)<br/>OutputTransfer(C1 -> C3)<br/>via Metachain
@@ -83,8 +83,8 @@ Execution order between `C2` and `C3` is preserved, i.e., `C2` is guaranteed to 
 shard Sh1 {
   contract C1 {
     fn method1() {
-      async(C2, callback2)
-      async(C3, callback3)
+      async(C2, method2, callback2)
+      async(C3, method3, callback3)
       compute("C1.end")
     }
 
@@ -126,8 +126,8 @@ sequenceDiagram
   participant C3
   
   User ->>+ C1: call
-  C1 ->> C1: register async(C2, C1.callback2)
-  C1 ->> C1: register async(C3, C1.callback3)
+  C1 ->> C1: register async(C2, method2, callback2)
+  C1 ->> C1: register async(C3, method3, callback3)
   C1 ->>- C1: compute(C1.end)
   
   C1 ->>+ Metachain: OutputTransfer(C1 -> C2)<br/>OutputTransfer(C1 -> C3)

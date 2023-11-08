@@ -5,13 +5,13 @@
 shard Sh1 {
   contract C0 {
     fn method0() {
-      sync(C1)
+      sync(C1, method1)
       compute("C0.end")
     }
   }
   contract C1 {
     fn method1() {
-      async(C2, callback)
+      async(C2, method2, callback)
       compute("C1.end")
     }
 
@@ -36,7 +36,7 @@ shard Sh2 {
 sequenceDiagram
   User ->>+ C0: call
   C0 ->>+ C1: sync call
-  C1 ->> C1: register async(C2, C1.callback)
+  C1 ->> C1: register async(C2, method2, callback)
   C1 ->>- C1: compute(C1.end)
   
   

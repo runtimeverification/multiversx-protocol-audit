@@ -6,8 +6,8 @@
 shard Sh1 {
   contract C1 {
     fn method1() {
-      async(C2, callback2)
-      async(C3, callback3)
+      async(C2, method2, callback2)
+      async(C3, method3, callback3)
       compute("C1.end")
     }
 
@@ -40,8 +40,8 @@ shard Sh1 {
 ```mermaid
 sequenceDiagram
   User ->>+ C1: call
-  C1 ->> C1: register async(C2, C1.callback2)
-  C1 ->> C1: register async(C3, C1.callback3)
+  C1 ->> C1: register async(C2, method2, callback2)
+  C1 ->> C1: register async(C3, method3, callback3)
   C1 ->>- C1: compute(C1.end)
   
   C1 ->>+ C2: execOnDestCtx(C1->C2)
